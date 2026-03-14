@@ -50,12 +50,12 @@ import {
           </div>
 
           <div class="mt-7 flex flex-wrap gap-3">
-            <NuxtLink
-              to="/book"
+            <a
+              href="https://samiul.crm.prosaas.org/public/lead"
               class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-rose-500/30 transition hover:bg-rose-500"
             >
               Get My Phone Fixed
-            </NuxtLink>
+            </a>
             <a
               href="#pricing"
               class="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
@@ -140,12 +140,12 @@ import {
           </div>
 
           <div class="mt-6 flex flex-wrap gap-3">
-            <NuxtLink
-              to="/book"
+            <a
+              href="https://samiul.crm.prosaas.org/public/lead"
               class="inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500"
             >
               Book Home Repair
-            </NuxtLink>
+            </a>
             <a
               href="tel:+15551234567"
               class="inline-flex items-center justify-center rounded-full border border-emerald-300 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
@@ -283,12 +283,12 @@ import {
             </div>
 
             <div class="mt-5 flex flex-wrap gap-3">
-              <NuxtLink
-                to="/book"
+              <a
+                href="https://samiul.crm.prosaas.org/public/lead"
                 class="inline-flex items-center justify-center rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-500"
               >
                 Book Instant Repair
-              </NuxtLink>
+              </a>
               <a
                 href="#pricing"
                 class="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -342,12 +342,12 @@ import {
           <h2 class="text-2xl font-bold">Visit Our Repair Hub</h2>
           <p class="mt-2 text-sm text-slate-300">120 Tech Avenue, Downtown. Open 7 days, 9AM-9PM.</p>
         </div>
-        <NuxtLink
-          to="/book"
+        <a
+          href="https://samiul.crm.prosaas.org/public/lead"
           class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
         >
           Book Appointment
-        </NuxtLink>
+        </a>
       </div>
     </section>
 
