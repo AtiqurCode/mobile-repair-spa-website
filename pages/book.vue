@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { LoaderCircle } from 'lucide-vue-next'
 
-const config = useRuntimeConfig()
-const bookingUrl = config.public.bookingUrl
+const bookingUrl = 'https://samiul.crm.prosaas.org/public/lead'
 
 onMounted(() => {
   setTimeout(() => {

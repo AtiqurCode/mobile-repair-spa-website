@@ -25,7 +25,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      bookingUrl: 'https://example.com/book-repair'
+      bookingUrl: 'https://samiul.crm.prosaas.org/public/lead'
     }
   }
 })

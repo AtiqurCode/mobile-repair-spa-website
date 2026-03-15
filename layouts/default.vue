@@ -26,24 +26,24 @@ const toggleTheme = () => {
         </NuxtLink>
 
         <div class="flex items-center gap-2 sm:gap-3">
-          <a
-            href="#home-fix"
+          <NuxtLink
+            to="/products"
             class="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
           >
-            Home Fix
-          </a>
+            Parts &amp; Products
+          </NuxtLink>
           <a
-            href="#pricing"
-            class="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
-            Pricing
-          </a>
+              href="/#pricing"
+              class="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              Pricing
+            </a>
           <a
-            href="#location"
-            class="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
-            Location
-          </a>
+              href="/#location"
+              class="hidden rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              Location
+            </a>
           <button
             type="button"
             class="inline-flex items-center justify-center rounded-full bg-slate-100 p-2 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
@@ -74,5 +74,7 @@ const toggleTheme = () => {
     <main>
       <slot />
     </main>
+
+    <LocationFooter />
   </div>
 </template>
