@@ -1,20 +1,136 @@
 <script setup lang="ts">
+import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter } from 'lucide-vue-next'
+
 const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
+const newsletterEmail = ref('')
+const subscribed = ref(false)
+
+function handleSubscribe() {
+  if (newsletterEmail.value) {
+    subscribed.value = true
+    newsletterEmail.value = ''
+  }
+}
 </script>
 
 <template>
-  <section id="location" class="bg-slate-900 px-4 py-14 text-white sm:px-6 lg:px-8">
-    <div class="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h2 class="text-2xl font-bold">Visit Our Repair Hub</h2>
-        <p class="mt-2 text-sm text-slate-300">120 Tech Avenue, Downtown. Open 7 days, 9AM-9PM.</p>
+  <!-- CTA banner -->
+  <section id="location" class="bg-rose-600 px-4 py-12 text-white sm:px-6 lg:px-8">
+    <div class="mx-auto flex max-w-7xl flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
+      <div class="flex-1">
+        <h2 class="text-2xl font-bold">Ready to Get Your Device Fixed?</h2>
+        <p class="mt-1 text-sm text-rose-100">Same-day service, honest pricing, 12-month warranty. Visit us or book online.</p>
+        <p class="mt-1 text-sm text-rose-100">
+          <MapPin class="mr-1 inline h-3.5 w-3.5" />120 Tech Avenue, Downtown — Open 7 days, 9AM–9PM
+        </p>
       </div>
       <a
         :href="appointmentUrl"
-        class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
+        class="inline-flex shrink-0 items-center justify-center rounded-full bg-white px-7 py-3 text-sm font-bold text-rose-600 shadow-lg transition hover:bg-rose-50"
       >
         Book Appointment
       </a>
     </div>
   </section>
+
+  <!-- Main footer -->
+  <footer class="bg-slate-900 px-4 pt-14 pb-8 text-slate-300 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl">
+      <div class="grid gap-10 lg:grid-cols-4 sm:grid-cols-2">
+        <!-- Brand -->
+        <div class="lg:col-span-1">
+          <NuxtLink to="/" class="inline-flex items-center gap-2 text-lg font-extrabold text-white">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" /><line x1="12" y1="18" x2="12" y2="18.01" /></svg>
+            </span>
+            RapidFix
+          </NuxtLink>
+          <p class="mt-3 text-sm leading-relaxed text-slate-400">
+            RapidFix empowers customers with fast, transparent, and warranty-backed phone repairs. We fix iPhones, Samsung, and more — same day.
+          </p>
+          <div class="mt-5 flex gap-3">
+            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-rose-600 hover:text-white">
+              <Facebook class="h-4 w-4" />
+            </a>
+            <a href="https://www.twitter.com/" target="_blank" rel="noopener noreferrer" aria-label="Twitter" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-rose-600 hover:text-white">
+              <Twitter class="h-4 w-4" />
+            </a>
+            <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-rose-600 hover:text-white">
+              <Linkedin class="h-4 w-4" />
+            </a>
+            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-rose-600 hover:text-white">
+              <Instagram class="h-4 w-4" />
+            </a>
+          </div>
+        </div>
+
+        <!-- Useful Links -->
+        <div>
+          <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Useful Links</h3>
+          <ul class="space-y-2 text-sm">
+            <li><NuxtLink to="/services" class="transition hover:text-white">Services</NuxtLink></li>
+            <li><NuxtLink to="/about" class="transition hover:text-white">About Us</NuxtLink></li>
+            <li><NuxtLink to="/blog" class="transition hover:text-white">Blog</NuxtLink></li>
+            <li><NuxtLink to="/contact" class="transition hover:text-white">Contact Us</NuxtLink></li>
+          </ul>
+        </div>
+
+        <!-- Contact info -->
+        <div>
+          <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Contact</h3>
+          <address class="space-y-3 text-sm not-italic">
+            <p class="flex items-start gap-2">
+              <MapPin class="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+              120 Tech Avenue, Downtown, New York
+            </p>
+            <p class="flex items-center gap-2">
+              <Phone class="h-4 w-4 shrink-0 text-rose-400" />
+              <a href="tel:+15551234567" class="transition hover:text-white">+1 (555) 123-4567</a>
+            </p>
+            <p class="flex items-center gap-2">
+              <Mail class="h-4 w-4 shrink-0 text-rose-400" />
+              <a href="mailto:hello@rapidfix.com" class="transition hover:text-white">hello@rapidfix.com</a>
+            </p>
+          </address>
+          <h3 class="mb-2 mt-6 text-sm font-bold uppercase tracking-wider text-white">Policy</h3>
+          <ul class="space-y-2 text-sm">
+            <li><NuxtLink to="/privacy" class="transition hover:text-white">Privacy Policy</NuxtLink></li>
+            <li><NuxtLink to="/terms" class="transition hover:text-white">Terms of Service</NuxtLink></li>
+            <li><NuxtLink to="/refund" class="transition hover:text-white">Refund Policy</NuxtLink></li>
+          </ul>
+        </div>
+
+        <!-- Newsletter -->
+        <div>
+          <h3 class="mb-2 text-sm font-bold uppercase tracking-wider text-white">Newsletter</h3>
+          <p class="mb-4 text-sm text-slate-400">Join over 10,000 people getting repair tips and exclusive deals.</p>
+          <div v-if="!subscribed">
+            <form class="flex flex-col gap-2" @submit.prevent="handleSubscribe">
+              <input
+                v-model="newsletterEmail"
+                type="email"
+                placeholder="Your email address"
+                required
+                class="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+              >
+              <button
+                type="submit"
+                class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-500"
+              >
+                Subscribe
+              </button>
+            </form>
+          </div>
+          <p v-else class="rounded-xl bg-emerald-900/40 px-4 py-3 text-sm font-semibold text-emerald-300">
+            Thanks for subscribing!
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-12 flex flex-col items-center justify-between gap-3 border-t border-slate-800 pt-6 text-xs text-slate-500 sm:flex-row">
+        <p>Copyright &copy; {{ new Date().getFullYear() }} RapidFix. All Rights Reserved.</p>
+        <p>120 Tech Avenue, Downtown · Open 7 days, 9AM–9PM</p>
+      </div>
+    </div>
+  </footer>
 </template>
