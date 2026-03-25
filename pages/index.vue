@@ -9,12 +9,12 @@ import {
   DollarSign,
   Droplets,
   Globe2,
+  LocateFixed,
   PhoneCall,
   Recycle,
   ShieldCheck,
   Smartphone,
   Star,
-  Stethoscope,
   Wrench,
   Zap
 } from 'lucide-vue-next'
@@ -371,16 +371,31 @@ const openFaq = ref<number | null>(null)
         </p>
         <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <article v-for="(step, i) in [
-            { icon: CalendarCheck2, title: 'Easy Online Booking', desc: 'Schedule your repair easily with our online system — takes under a minute.' },
-            { icon: Stethoscope, title: 'Expert Diagnosis', desc: 'Our certified technicians quickly identify and diagnose the exact issue.' },
-            { icon: Wrench, title: 'Fast & Reliable Repair', desc: 'Swift and dependable repairs using genuine OEM-grade parts.' },
-            { icon: CheckCircle2, title: 'Quality Assurance', desc: 'Every repair is tested against 35+ checkpoints before handoff.' },
-          ]" :key="i" class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-900/40">
-              <component :is="step.icon" class="h-5 w-5 text-rose-600" />
+            { icon: CalendarCheck2, title: 'Easy Online Booking', desc: 'Schedule your repair easily with our online system — takes under a minute.', highlight: false },
+            { icon: LocateFixed, title: 'Home Fix Available', desc: 'After booking, choose in-home repair — our technician comes to you with all tools and parts ready.', highlight: true },
+            { icon: Wrench, title: 'Fast & Reliable Repair', desc: 'Swift and dependable repairs using genuine OEM-grade parts.', highlight: false },
+            { icon: CheckCircle2, title: 'Quality Assurance', desc: 'Every repair is tested against 35+ checkpoints before handoff.', highlight: false },
+          ]" :key="i" class="rounded-2xl border p-5 transition"
+            :class="step.highlight
+              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/30'
+              : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'"
+          >
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl"
+              :class="step.highlight ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-rose-100 dark:bg-rose-900/40'"
+            >
+              <component :is="step.icon" class="h-5 w-5"
+                :class="step.highlight ? 'text-emerald-600' : 'text-rose-600'"
+              />
             </span>
             <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">{{ i + 1 }}. {{ step.title }}</h3>
             <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">{{ step.desc }}</p>
+            <a
+              v-if="step.highlight"
+              :href="appointmentUrl"
+              class="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
+            >
+              Book Home Repair →
+            </a>
           </article>
         </div>
       </div>
