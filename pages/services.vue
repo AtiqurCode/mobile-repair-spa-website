@@ -4,11 +4,16 @@ import {
   BatteryCharging,
   Camera,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   Droplets,
+  Fingerprint,
+  Layers,
   Mic2,
   ShieldCheck,
   SlidersHorizontal,
+  Smartphone,
   Speaker,
   Tag,
   Usb,
@@ -47,6 +52,7 @@ const popularTags = [
 const activeTag = ref<string | null>(null)
 
 const services = [
+  // ── iPhone ────────────────────────────────────────────────
   {
     id: 1,
     category: 'iPhone',
@@ -109,6 +115,43 @@ const services = [
   },
   {
     id: 6,
+    category: 'iPhone',
+    tags: ['Hardware Fix', 'Same-Day Service', 'Warranty Included'],
+    icon: Smartphone,
+    name: 'iPhone Back Glass Repair',
+    description: 'Replace cracked or shattered rear glass on iPhone 8 through iPhone 15 Pro Max with colour-matched OEM glass panels.',
+    price: 69,
+    eta: '45–75 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 7,
+    category: 'iPhone',
+    tags: ['Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Fingerprint,
+    name: 'Face ID / Touch ID Repair',
+    description: 'Restore broken Face ID sensors or unresponsive Touch ID home buttons. Genuine Apple-compatible components used throughout.',
+    price: 95,
+    eta: '60–90 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 8,
+    category: 'iPhone',
+    tags: ['Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Layers,
+    name: 'iPhone Screen Protector Fitting',
+    description: 'Professional dust-free application of tempered glass or ceramic screen protectors with edge-to-edge alignment.',
+    price: 15,
+    eta: '10–15 min',
+    warranty: '3 months',
+    image: 'https://images.unsplash.com/photo-1601972599720-36938d4ecd31?auto=format&fit=crop&w=900&q=80',
+  },
+  // ── Samsung ───────────────────────────────────────────────
+  {
+    id: 9,
     category: 'Samsung',
     tags: ['Screen Repair', 'Same-Day Service', 'Warranty Included'],
     icon: Wrench,
@@ -120,7 +163,7 @@ const services = [
     image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=900&q=80',
   },
   {
-    id: 7,
+    id: 10,
     category: 'Samsung',
     tags: ['Battery Replacement', 'Quick Service', 'Same-Day Service', 'Warranty Included'],
     icon: BatteryCharging,
@@ -132,7 +175,7 @@ const services = [
     image: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=900&q=80',
   },
   {
-    id: 8,
+    id: 11,
     category: 'Samsung',
     tags: ['Charging Fix', 'Hardware Fix', 'Quick Service', 'Warranty Included'],
     icon: Usb,
@@ -144,7 +187,44 @@ const services = [
     image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=900&q=80',
   },
   {
-    id: 9,
+    id: 12,
+    category: 'Samsung',
+    tags: ['Camera Repair', 'Same-Day Service', 'Warranty Included'],
+    icon: Camera,
+    name: 'Samsung Camera Repair',
+    description: 'Fix cracked camera lenses, blurry shots, and autofocus failures on Galaxy S23, S24, and A-series devices.',
+    price: 75,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 13,
+    category: 'Samsung',
+    tags: ['Speaker Fix', 'Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Speaker,
+    name: 'Samsung Speaker Repair',
+    description: 'Restore distorted, quiet, or completely silent speakers on Samsung Galaxy phones including foldables.',
+    price: 50,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 14,
+    category: 'Samsung',
+    tags: ['Hardware Fix', 'Warranty Included'],
+    icon: Smartphone,
+    name: 'Samsung Back Cover Replacement',
+    description: 'Replace cracked or scratched back covers on Galaxy S and A series with OEM glass or polycarbonate panels.',
+    price: 55,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=900&q=80',
+  },
+  // ── Google Pixel ──────────────────────────────────────────
+  {
+    id: 15,
     category: 'Google Pixel',
     tags: ['Screen Repair', 'Same-Day Service', 'Warranty Included'],
     icon: Wrench,
@@ -156,7 +236,7 @@ const services = [
     image: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=900&q=80',
   },
   {
-    id: 10,
+    id: 16,
     category: 'Google Pixel',
     tags: ['Battery Replacement', 'Quick Service', 'Same-Day Service', 'Warranty Included'],
     icon: BatteryCharging,
@@ -168,7 +248,32 @@ const services = [
     image: 'https://images.unsplash.com/photo-1621839673705-6617adf9e890?auto=format&fit=crop&w=900&q=80',
   },
   {
-    id: 11,
+    id: 17,
+    category: 'Google Pixel',
+    tags: ['Charging Fix', 'Quick Service', 'Warranty Included'],
+    icon: Zap,
+    name: 'Pixel Charging Port Repair',
+    description: 'Fix USB-C port faults on Pixel 6, 7, 8, and 9 — including slow charging, no charging, and loose connector issues.',
+    price: 60,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1562408590-e32931084e23?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 18,
+    category: 'Google Pixel',
+    tags: ['Camera Repair', 'Warranty Included'],
+    icon: Camera,
+    name: 'Pixel Camera Repair',
+    description: 'Restore full camera functionality on Pixel 6a, 7 Pro, 8 Pro — including Night Sight, astrophotography, and video stabilisation.',
+    price: 85,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1587840171670-8b850147754e?auto=format&fit=crop&w=900&q=80',
+  },
+  // ── General ───────────────────────────────────────────────
+  {
+    id: 19,
     category: 'General',
     tags: ['Water Damage', 'Hardware Fix'],
     icon: Droplets,
@@ -180,7 +285,7 @@ const services = [
     image: 'https://images.unsplash.com/photo-1517241034903-9a4c3ab12f00?auto=format&fit=crop&w=900&q=80',
   },
   {
-    id: 12,
+    id: 20,
     category: 'General',
     tags: ['Hardware Fix', 'Warranty Included'],
     icon: Wifi,
@@ -192,18 +297,58 @@ const services = [
     image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80',
   },
   {
-    id: 13,
+    id: 21,
     category: 'General',
     tags: ['Speaker Fix', 'Hardware Fix', 'Quick Service', 'Warranty Included'],
     icon: Mic2,
     name: 'Microphone Repair',
-    description: 'Fix muffled calls, voice note issues, and Siri/Google Assistant recognition failures caused by mic damage.',
+    description: 'Fix muffled calls, voice note issues, and voice assistant recognition failures caused by mic damage.',
     price: 50,
     eta: '30–45 min',
     warranty: '12 months',
     image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=80',
   },
+  {
+    id: 22,
+    category: 'General',
+    tags: ['Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Wrench,
+    name: 'Power / Volume Button Repair',
+    description: 'Fix stuck, unresponsive, or physically broken power and volume buttons on any smartphone model.',
+    price: 40,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 23,
+    category: 'General',
+    tags: ['Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Layers,
+    name: 'SIM / MicroSD Tray Repair',
+    description: 'Replace bent, broken, or missing SIM card and microSD trays to restore reliable connectivity and storage.',
+    price: 25,
+    eta: '15–20 min',
+    warranty: '6 months',
+    image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 24,
+    category: 'General',
+    tags: ['Screen Repair', 'Quick Service', 'Warranty Included'],
+    icon: Layers,
+    name: 'Screen Protector Installation',
+    description: 'Professional dust-free fitting of tempered glass or privacy screen protectors for all major phone models.',
+    price: 12,
+    eta: '10–15 min',
+    warranty: '3 months',
+    image: 'https://images.unsplash.com/photo-1601972599720-36938d4ecd31?auto=format&fit=crop&w=900&q=80',
+  },
 ]
+
+// ── Pagination ─────────────────────────────────────────────
+const PAGE_SIZE = 9
+const currentPage = ref(1)
 
 const filteredServices = computed(() => {
   let result = activeCategory.value === 'All Categories'
@@ -223,6 +368,34 @@ const filteredServices = computed(() => {
 
   return result
 })
+
+const totalPages = computed(() => Math.ceil(filteredServices.value.length / PAGE_SIZE))
+
+const paginatedServices = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredServices.value.slice(start, start + PAGE_SIZE)
+})
+
+const pageNumbers = computed(() => {
+  const total = totalPages.value
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const cur = currentPage.value
+  const pages: (number | '…')[] = [1]
+  if (cur > 3) pages.push('…')
+  for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i)
+  if (cur < total - 2) pages.push('…')
+  pages.push(total)
+  return pages
+})
+
+function goToPage(p: number) {
+  if (p < 1 || p > totalPages.value) return
+  currentPage.value = p
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Reset to page 1 whenever filters change
+watch([activeCategory, activeSort, activeTag], () => { currentPage.value = 1 })
 
 function formatPrice(p: number) {
   return `$${p.toFixed(0)}`
@@ -459,7 +632,13 @@ function clearAllFilters() {
         <div class="min-w-0 flex-1">
           <div class="mb-5 flex items-center justify-between">
             <p class="text-sm text-slate-500 dark:text-slate-400">
-              Showing <span class="font-semibold text-slate-900 dark:text-white">{{ filteredServices.length }}</span> service{{ filteredServices.length !== 1 ? 's' : '' }}
+              Showing
+              <span class="font-semibold text-slate-900 dark:text-white">
+                {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(currentPage * PAGE_SIZE, filteredServices.length) }}
+              </span>
+              of
+              <span class="font-semibold text-slate-900 dark:text-white">{{ filteredServices.length }}</span>
+              service{{ filteredServices.length !== 1 ? 's' : '' }}
             </p>
             <button
               v-if="activeFilterCount > 0"
@@ -473,7 +652,7 @@ function clearAllFilters() {
 
           <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             <article
-              v-for="service in filteredServices"
+              v-for="service in paginatedServices"
               :key="service.id"
               class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
             >
@@ -523,6 +702,47 @@ function clearAllFilters() {
           <!-- Empty state -->
           <div v-if="filteredServices.length === 0" class="py-20 text-center text-slate-400">
             No services found for the selected filters.
+          </div>
+
+          <!-- ── Pagination ──────────────────────────────────── -->
+          <div v-if="totalPages > 1" class="mt-10 flex items-center justify-center gap-1.5">
+            <!-- Prev -->
+            <button
+              type="button"
+              :disabled="currentPage === 1"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-rose-500 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              @click="goToPage(currentPage - 1)"
+            >
+              <ChevronLeft class="h-4 w-4" />
+            </button>
+
+            <!-- Page numbers -->
+            <template v-for="(p, i) in pageNumbers" :key="i">
+              <span v-if="p === '…'" class="px-1 text-sm text-slate-400">…</span>
+              <button
+                v-else
+                type="button"
+                class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-full border text-sm font-semibold transition"
+                :class="
+                  currentPage === p
+                    ? 'border-rose-600 bg-rose-600 text-white'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-rose-400 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                "
+                @click="goToPage(p as number)"
+              >
+                {{ p }}
+              </button>
+            </template>
+
+            <!-- Next -->
+            <button
+              type="button"
+              :disabled="currentPage === totalPages"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-rose-500 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              @click="goToPage(currentPage + 1)"
+            >
+              <ChevronRight class="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
