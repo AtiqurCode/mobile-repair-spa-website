@@ -1,16 +1,7 @@
 <script setup lang="ts">
-import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter } from 'lucide-vue-next'
+import {  Mail, MapPin, Phone } from 'lucide-vue-next'
 
 const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
-const newsletterEmail = ref('')
-const subscribed = ref(false)
-
-function handleSubscribe() {
-  if (newsletterEmail.value) {
-    subscribed.value = true
-    newsletterEmail.value = ''
-  }
-}
 </script>
 
 <template>
@@ -36,7 +27,7 @@ function handleSubscribe() {
   <!-- Main footer -->
   <footer class="bg-slate-900 px-4 pt-14 pb-8 text-slate-300 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-7xl">
-      <div class="grid gap-10 lg:grid-cols-4 sm:grid-cols-2">
+      <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Brand -->
         <div class="lg:col-span-1">
           <NuxtLink to="/" class="inline-flex items-center gap-2 text-lg font-extrabold text-white">
@@ -48,29 +39,14 @@ function handleSubscribe() {
           <p class="mt-3 text-sm leading-relaxed text-slate-400">
             RapidFix empowers customers with fast, transparent, and warranty-backed phone repairs. We fix iPhones, Samsung, and more — same day.
           </p>
-          <div class="mt-5 flex gap-3">
-            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-rose-600 hover:text-white">
-              <Facebook class="h-4 w-4" />
-            </a>
-            <a href="https://www.twitter.com/" target="_blank" rel="noopener noreferrer" aria-label="Twitter" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-rose-600 hover:text-white">
-              <Twitter class="h-4 w-4" />
-            </a>
-            <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-rose-600 hover:text-white">
-              <Linkedin class="h-4 w-4" />
-            </a>
-            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-slate-400 transition hover:bg-rose-600 hover:text-white">
-              <Instagram class="h-4 w-4" />
-            </a>
-          </div>
         </div>
 
         <!-- Useful Links -->
         <div>
           <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Useful Links</h3>
           <ul class="space-y-2 text-sm">
-            <li><NuxtLink to="/services" class="transition hover:text-white">Services</NuxtLink></li>
+            <li><NuxtLink to="/" class="transition hover:text-white">Services</NuxtLink></li>
             <li><NuxtLink to="/about" class="transition hover:text-white">About Us</NuxtLink></li>
-            <li><NuxtLink to="/blog" class="transition hover:text-white">Blog</NuxtLink></li>
             <li><NuxtLink to="/contact" class="transition hover:text-white">Contact Us</NuxtLink></li>
           </ul>
         </div>
@@ -92,38 +68,6 @@ function handleSubscribe() {
               <a href="mailto:hello@rapidfix.com" class="transition hover:text-white">hello@rapidfix.com</a>
             </p>
           </address>
-          <h3 class="mb-2 mt-6 text-sm font-bold uppercase tracking-wider text-white">Policy</h3>
-          <ul class="space-y-2 text-sm">
-            <li><NuxtLink to="/privacy" class="transition hover:text-white">Privacy Policy</NuxtLink></li>
-            <li><NuxtLink to="/terms" class="transition hover:text-white">Terms of Service</NuxtLink></li>
-            <li><NuxtLink to="/refund" class="transition hover:text-white">Refund Policy</NuxtLink></li>
-          </ul>
-        </div>
-
-        <!-- Newsletter -->
-        <div>
-          <h3 class="mb-2 text-sm font-bold uppercase tracking-wider text-white">Newsletter</h3>
-          <p class="mb-4 text-sm text-slate-400">Join over 10,000 people getting repair tips and exclusive deals.</p>
-          <div v-if="!subscribed">
-            <form class="flex flex-col gap-2" @submit.prevent="handleSubscribe">
-              <input
-                v-model="newsletterEmail"
-                type="email"
-                placeholder="Your email address"
-                required
-                class="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
-              >
-              <button
-                type="submit"
-                class="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-500"
-              >
-                Subscribe
-              </button>
-            </form>
-          </div>
-          <p v-else class="rounded-xl bg-emerald-900/40 px-4 py-3 text-sm font-semibold text-emerald-300">
-            Thanks for subscribing!
-          </p>
         </div>
       </div>
 

@@ -10,9 +10,8 @@ const toggleTheme = () => {
 }
 
 const navLinks = [
-  { label: 'Services', to: '/services' },
+  { label: 'Home', to: '/' },
   { label: 'About', to: '/about' },
-  { label: 'Blog', to: '/blog' },
   { label: 'Contact', to: '/contact' },
 ]
 </script>

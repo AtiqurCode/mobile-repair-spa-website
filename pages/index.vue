@@ -2,614 +2,883 @@
 import {
   BadgeCheck,
   BatteryCharging,
-  CalendarCheck2,
+  Camera,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
-  Cpu,
-  DollarSign,
   Droplets,
-  Globe2,
-  LocateFixed,
-  PhoneCall,
-  Recycle,
+  Fingerprint,
+  Layers,
+  Mic2,
   ShieldCheck,
+  SlidersHorizontal,
   Smartphone,
-  Star,
+  Speaker,
+  Tag,
+  Usb,
+  Wifi,
   Wrench,
+  X,
   Zap
 } from 'lucide-vue-next'
 
+useHead({ title: 'RapidFix Phone Repair — Expert Repairs & Same-Day Service' })
+
 const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
 
-const featuredServices = [
+const categories = ['All Categories', 'iPhone', 'Samsung', 'Google Pixel', 'General']
+const activeCategory = ref('All Categories')
+
+const sortOptions = [
+  { label: 'Latest Service', value: 'latest' },
+  { label: 'Low to High', value: 'low' },
+  { label: 'High to Low', value: 'high' },
+]
+const activeSort = ref('latest')
+
+const popularTags = [
+  'Screen Repair',
+  'Battery Replacement',
+  'Quick Service',
+  'Water Damage',
+  'Charging Fix',
+  'Camera Repair',
+  'Speaker Fix',
+  'Hardware Fix',
+  'Same-Day Service',
+  'Warranty Included',
+]
+const activeTag = ref<string | null>(null)
+
+const services = [
+  // ── iPhone ────────────────────────────────────────────────
   {
     id: 1,
-    name: 'iPhone Screen Replacement',
     category: 'iPhone',
+    tags: ['Screen Repair', 'Quick Service', 'Same-Day Service', 'Warranty Included'],
+    icon: Wrench,
+    name: 'iPhone Screen Replacement',
+    description: 'OLED and LCD screen replacements with factory-calibrated touch and True Tone support for all modern iPhone models.',
     price: 79,
     eta: '45–60 min',
+    warranty: '12 months',
     image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80',
-    excerpt: 'OLED & LCD replacements with factory-calibrated touch and True Tone support for all modern iPhones.',
   },
   {
     id: 2,
-    name: 'Samsung Screen Replacement',
-    category: 'Samsung',
-    price: 89,
-    eta: '60–90 min',
-    image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=900&q=80',
-    excerpt: 'Genuine AMOLED replacements for Galaxy S and A series with full fingerprint-on-display support.',
+    category: 'iPhone',
+    tags: ['Battery Replacement', 'Quick Service', 'Same-Day Service', 'Warranty Included'],
+    icon: BatteryCharging,
+    name: 'iPhone Battery Replacement',
+    description: 'Restore all-day battery life with a health-certified replacement cell. Compatible with iPhone 11 through iPhone 15 series.',
+    price: 49,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=900&q=80',
   },
   {
     id: 3,
-    name: 'Battery Replacement',
-    category: 'All Brands',
-    price: 45,
+    category: 'iPhone',
+    tags: ['Charging Fix', 'Quick Service', 'Same-Day Service', 'Warranty Included'],
+    icon: Zap,
+    name: 'iPhone Charging Port Fix',
+    description: 'Resolve slow charging, loose cable connection, and intermittent charging on Lightning and USB-C iPhones.',
+    price: 59,
     eta: '30–45 min',
-    image: 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=900&q=80',
-    excerpt: 'Health-certified battery cells for iPhone, Samsung & Pixel — restore all-day battery life.',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=900&q=80',
   },
   {
     id: 4,
-    name: 'Water Damage Treatment',
+    category: 'iPhone',
+    tags: ['Camera Repair', 'Same-Day Service', 'Warranty Included'],
+    icon: Camera,
+    name: 'iPhone Camera Repair',
+    description: 'Fix blurry, non-focusing, or black front and rear camera modules. Includes lens glass and OIS calibration.',
+    price: 89,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 5,
+    category: 'iPhone',
+    tags: ['Speaker Fix', 'Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Speaker,
+    name: 'iPhone Speaker / Earpiece Repair',
+    description: 'Repair muffled, crackling, or completely silent speakers and earpieces. We also fix microphone issues.',
+    price: 55,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 6,
+    category: 'iPhone',
+    tags: ['Hardware Fix', 'Same-Day Service', 'Warranty Included'],
+    icon: Smartphone,
+    name: 'iPhone Back Glass Repair',
+    description: 'Replace cracked or shattered rear glass on iPhone 8 through iPhone 15 Pro Max with colour-matched OEM glass panels.',
+    price: 69,
+    eta: '45–75 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 7,
+    category: 'iPhone',
+    tags: ['Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Fingerprint,
+    name: 'Face ID / Touch ID Repair',
+    description: 'Restore broken Face ID sensors or unresponsive Touch ID home buttons. Genuine Apple-compatible components used throughout.',
+    price: 95,
+    eta: '60–90 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 8,
+    category: 'iPhone',
+    tags: ['Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Layers,
+    name: 'iPhone Screen Protector Fitting',
+    description: 'Professional dust-free application of tempered glass or ceramic screen protectors with edge-to-edge alignment.',
+    price: 15,
+    eta: '10–15 min',
+    warranty: '3 months',
+    image: 'https://images.unsplash.com/photo-1601972599720-36938d4ecd31?auto=format&fit=crop&w=900&q=80',
+  },
+  // ── Samsung ───────────────────────────────────────────────
+  {
+    id: 9,
+    category: 'Samsung',
+    tags: ['Screen Repair', 'Same-Day Service', 'Warranty Included'],
+    icon: Wrench,
+    name: 'Samsung Screen Replacement',
+    description: 'Genuine AMOLED screen replacements for Galaxy S and A series phones. Maintains fingerprint-on-display functionality.',
+    price: 89,
+    eta: '60–90 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 10,
+    category: 'Samsung',
+    tags: ['Battery Replacement', 'Quick Service', 'Same-Day Service', 'Warranty Included'],
+    icon: BatteryCharging,
+    name: 'Samsung Battery Replacement',
+    description: 'Replace degraded batteries on Galaxy S, A, and Note series phones to restore full-day performance.',
+    price: 45,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 11,
+    category: 'Samsung',
+    tags: ['Charging Fix', 'Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Usb,
+    name: 'Samsung Charging Port Repair',
+    description: 'Fix USB-C charging port damage, bent pins, and debris blockage on all Samsung Galaxy models.',
+    price: 55,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 12,
+    category: 'Samsung',
+    tags: ['Camera Repair', 'Same-Day Service', 'Warranty Included'],
+    icon: Camera,
+    name: 'Samsung Camera Repair',
+    description: 'Fix cracked camera lenses, blurry shots, and autofocus failures on Galaxy S23, S24, and A-series devices.',
+    price: 75,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 13,
+    category: 'Samsung',
+    tags: ['Speaker Fix', 'Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Speaker,
+    name: 'Samsung Speaker Repair',
+    description: 'Restore distorted, quiet, or completely silent speakers on Samsung Galaxy phones including foldables.',
+    price: 50,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 14,
+    category: 'Samsung',
+    tags: ['Hardware Fix', 'Warranty Included'],
+    icon: Smartphone,
+    name: 'Samsung Back Cover Replacement',
+    description: 'Replace cracked or scratched back covers on Galaxy S and A series with OEM glass or polycarbonate panels.',
+    price: 55,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=900&q=80',
+  },
+  // ── Google Pixel ──────────────────────────────────────────
+  {
+    id: 15,
+    category: 'Google Pixel',
+    tags: ['Screen Repair', 'Same-Day Service', 'Warranty Included'],
+    icon: Wrench,
+    name: 'Pixel Screen Replacement',
+    description: 'Factory-grade OLED screen replacements for Google Pixel 6, 7, 8, and 9 series with full touch calibration.',
+    price: 95,
+    eta: '60–90 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 16,
+    category: 'Google Pixel',
+    tags: ['Battery Replacement', 'Quick Service', 'Same-Day Service', 'Warranty Included'],
+    icon: BatteryCharging,
+    name: 'Pixel Battery Replacement',
+    description: 'Restore Pixel battery life with a certified replacement. Fix overheating, rapid drain, and unexpected shutdowns.',
+    price: 59,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1621839673705-6617adf9e890?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 17,
+    category: 'Google Pixel',
+    tags: ['Charging Fix', 'Quick Service', 'Warranty Included'],
+    icon: Zap,
+    name: 'Pixel Charging Port Repair',
+    description: 'Fix USB-C port faults on Pixel 6, 7, 8, and 9 — including slow charging, no charging, and loose connector issues.',
+    price: 60,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1562408590-e32931084e23?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 18,
+    category: 'Google Pixel',
+    tags: ['Camera Repair', 'Warranty Included'],
+    icon: Camera,
+    name: 'Pixel Camera Repair',
+    description: 'Restore full camera functionality on Pixel 6a, 7 Pro, 8 Pro — including Night Sight, astrophotography, and video stabilisation.',
+    price: 85,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1587840171670-8b850147754e?auto=format&fit=crop&w=900&q=80',
+  },
+  // ── General ───────────────────────────────────────────────
+  {
+    id: 19,
     category: 'General',
+    tags: ['Water Damage', 'Hardware Fix'],
+    icon: Droplets,
+    name: 'Water Damage Treatment',
+    description: 'Emergency ultrasonic cleaning and corrosion removal for liquid-damaged phones. Best chance of recovery when treated early.',
     price: 70,
     eta: '1–2 hours',
-    image: 'https://images.unsplash.com/photo-1517241034903-9a4c3ab12f00?auto=format&fit=crop&w=900&q=80',
-    excerpt: 'Emergency ultrasonic cleaning and corrosion removal — best chance of recovery when treated early.',
-  },
-]
-
-const features = [
-  { icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/40', title: 'Affordable Rates', desc: 'Competitive pricing with transparent costs, no hidden fees.' },
-  { icon: CheckCircle2, color: 'text-sky-600', bg: 'bg-sky-100 dark:bg-sky-900/40', title: 'Satisfaction Guarantee', desc: 'Ensuring complete satisfaction on every repair or service.' },
-  { icon: Recycle, color: 'text-teal-600', bg: 'bg-teal-100 dark:bg-teal-900/40', title: 'Eco-Friendly Practices', desc: 'Committed to environmentally responsible repair solutions.' },
-  { icon: CalendarCheck2, color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/40', title: 'Flexible Scheduling', desc: 'Book appointments that fit seamlessly into your busy schedule.' },
-  { icon: ShieldCheck, color: 'text-rose-600', bg: 'bg-rose-100 dark:bg-rose-900/40', title: 'Warranty Coverage', desc: 'Enjoy peace of mind with our comprehensive 12-month warranty.' },
-  { icon: Cpu, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/40', title: 'Genuine Parts', desc: 'Using only authentic OEM-grade parts for best device performance.' },
-  { icon: Clock3, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/40', title: 'Same-Day Service', desc: 'Swift repairs with options for same-day service on most devices.' },
-  { icon: Globe2, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/40', title: '24/7 Support', desc: 'Round-the-clock assistance to address your urgent repair needs.' },
-]
-
-const team = [
-  { name: 'Alex Carter', role: 'Network Configuration Specialist', image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Mark Davis', role: 'Smart Home System Specialist', image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Grace Robinson', role: 'Computer Hardware Engineer', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80' },
-]
-
-const testimonials = [
-  {
-    name: 'James Collins',
-    role: 'Service Director',
-    text: 'Dropped my phone at lunch and got it back before dinner. Incredible same-day turnaround — couldn\'t believe how fast it was.',
-    rating: 5,
-  },
-  {
-    name: 'David Wright',
-    role: 'General Manager',
-    text: 'The screen replacement was absolutely perfect. Pricing was exactly as quoted — no hidden fees. A game-changer for us.',
-    rating: 5,
-  },
-  {
-    name: 'Emily Rogers',
-    role: 'Head of Service Operations',
-    text: 'Fixed my water-damaged Samsung when I thought it was gone for good. The team was professional and the warranty gives real peace of mind.',
-    rating: 5,
-  },
-  {
-    name: 'Sarah Thompson',
-    role: 'Operations Manager',
-    text: 'Battery now lasts all day again. RapidFix was transparent from start to finish — no surprises at checkout. Highly recommended.',
-    rating: 5,
-  },
-  {
-    name: 'Maria Lopez',
-    role: 'Customer Support Lead',
-    text: 'Booked online, dropped off, picked up same day. The whole process was seamless and the technicians clearly knew what they were doing.',
-    rating: 5,
-  },
-]
-
-const achievements = [
-  { value: '8+', label: 'Years of Excellence' },
-  { value: '98%', label: 'Client Satisfaction' },
-  { value: '15k+', label: 'Repairs Completed' },
-  { value: '12', label: 'Expert Technicians' },
-]
-
-const blogPosts = [
-  {
-    id: 1,
-    date: '2024-08-29',
-    title: 'Why OEM Parts Make a Difference in Phone Repairs',
-    excerpt: 'Using genuine OEM parts vs. aftermarket components can significantly affect your device\'s longevity and performance after repair.',
-    image: 'https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: 2,
-    date: '2024-07-31',
-    title: 'How to Keep Your Phone Battery Healthy for Longer',
-    excerpt: 'Simple habits like avoiding extreme temperatures, partial charging cycles, and genuine chargers can extend battery life by years.',
-    image: 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: 3,
-    date: '2024-06-12',
-    title: 'Water Damage: What to Do in the First 5 Minutes',
-    excerpt: 'Quick action matters. Don\'t charge it, don\'t press buttons, and get it to a repair shop as soon as possible for the best recovery chance.',
+    warranty: '90 days',
     image: 'https://images.unsplash.com/photo-1517241034903-9a4c3ab12f00?auto=format&fit=crop&w=900&q=80',
   },
+  {
+    id: 20,
+    category: 'General',
+    tags: ['Hardware Fix', 'Warranty Included'],
+    icon: Wifi,
+    name: 'Wi-Fi / Bluetooth Antenna Repair',
+    description: 'Fix weak or absent Wi-Fi and Bluetooth signal caused by damaged antenna flex cables or logic board connections.',
+    price: 65,
+    eta: '45–60 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 21,
+    category: 'General',
+    tags: ['Speaker Fix', 'Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Mic2,
+    name: 'Microphone Repair',
+    description: 'Fix muffled calls, voice note issues, and voice assistant recognition failures caused by mic damage.',
+    price: 50,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 22,
+    category: 'General',
+    tags: ['Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Wrench,
+    name: 'Power / Volume Button Repair',
+    description: 'Fix stuck, unresponsive, or physically broken power and volume buttons on any smartphone model.',
+    price: 40,
+    eta: '30–45 min',
+    warranty: '12 months',
+    image: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 23,
+    category: 'General',
+    tags: ['Hardware Fix', 'Quick Service', 'Warranty Included'],
+    icon: Layers,
+    name: 'SIM / MicroSD Tray Repair',
+    description: 'Replace bent, broken, or missing SIM card and microSD trays to restore reliable connectivity and storage.',
+    price: 25,
+    eta: '15–20 min',
+    warranty: '6 months',
+    image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 24,
+    category: 'General',
+    tags: ['Screen Repair', 'Quick Service', 'Warranty Included'],
+    icon: Layers,
+    name: 'Screen Protector Installation',
+    description: 'Professional dust-free fitting of tempered glass or privacy screen protectors for all major phone models.',
+    price: 12,
+    eta: '10–15 min',
+    warranty: '3 months',
+    image: 'https://images.unsplash.com/photo-1601972599720-36938d4ecd31?auto=format&fit=crop&w=900&q=80',
+  },
 ]
 
-const faqs = [
-  { q: 'Do you use OEM-grade parts?', a: 'Yes. We use OEM or premium-grade compatible parts depending on model and availability.' },
-  { q: 'How long does screen replacement take?', a: 'Most screen replacements are completed within 45 to 90 minutes.' },
-  { q: 'What if my phone has water damage?', a: 'Bring it in immediately. Early diagnostics significantly increase recovery success.' },
-  { q: 'Do you offer a warranty on repairs?', a: 'Yes. All our repairs come with a 12-month warranty covering parts and workmanship.' },
-  { q: 'Can I book a home repair visit?', a: 'Yes, we offer home repair visits in selected areas. Book online or call us to check availability.' },
-]
+// ── Pagination ─────────────────────────────────────────────
+const PAGE_SIZE = 9
+const currentPage = ref(1)
 
-const openFaq = ref<number | null>(null)
+const filteredServices = computed(() => {
+  let result = activeCategory.value === 'All Categories'
+    ? [...services]
+    : services.filter((s) => s.category === activeCategory.value)
+
+  if (activeTag.value) {
+    const tag = activeTag.value
+    result = result.filter((s) => s.tags.includes(tag))
+  }
+
+  if (activeSort.value === 'low') {
+    result = result.sort((a, b) => a.price - b.price)
+  } else if (activeSort.value === 'high') {
+    result = result.sort((a, b) => b.price - a.price)
+  }
+
+  return result
+})
+
+const totalPages = computed(() => Math.ceil(filteredServices.value.length / PAGE_SIZE))
+
+const paginatedServices = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredServices.value.slice(start, start + PAGE_SIZE)
+})
+
+const pageNumbers = computed(() => {
+  const total = totalPages.value
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const cur = currentPage.value
+  const pages: (number | '…')[] = [1]
+  if (cur > 3) pages.push('…')
+  for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i)
+  if (cur < total - 2) pages.push('…')
+  pages.push(total)
+  return pages
+})
+
+function goToPage(p: number) {
+  if (p < 1 || p > totalPages.value) return
+  currentPage.value = p
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Reset to page 1 whenever filters change
+watch([activeCategory, activeSort, activeTag], () => { currentPage.value = 1 })
+
+function formatPrice(p: number) {
+  return `$${p.toFixed(0)}`
+}
+
+const mobileFiltersOpen = ref(false)
+
+function onFiltersEscape(e: KeyboardEvent) {
+  if (e.key === 'Escape') closeMobileFilters()
+}
+
+watch(mobileFiltersOpen, (open) => {
+  if (!import.meta.client) return
+  document.documentElement.style.overflow = open ? 'hidden' : ''
+  if (open) window.addEventListener('keydown', onFiltersEscape)
+  else window.removeEventListener('keydown', onFiltersEscape)
+})
+
+onUnmounted(() => {
+  if (import.meta.client) {
+    document.documentElement.style.overflow = ''
+    window.removeEventListener('keydown', onFiltersEscape)
+  }
+})
+
+function toggleTag(tag: string) {
+  activeTag.value = activeTag.value === tag ? null : tag
+}
+
+const activeFilterCount = computed(() => {
+  let n = 0
+  if (activeCategory.value !== 'All Categories') n++
+  if (activeSort.value !== 'latest') n++
+  if (activeTag.value) n++
+  return n
+})
+
+function clearAllFilters() {
+  activeCategory.value = 'All Categories'
+  activeSort.value = 'latest'
+  activeTag.value = null
+}
+
+function closeMobileFilters() {
+  mobileFiltersOpen.value = false
+}
 </script>
 
 <template>
   <div>
-    <!-- ── Hero ─────────────────────────────────────────────── -->
-    <section class="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 px-4 py-16 text-white sm:px-6 lg:px-8">
-      <div class="absolute -left-20 top-20 h-56 w-56 rounded-full bg-rose-500/20 blur-3xl" />
-      <div class="absolute -right-24 bottom-12 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl" />
-
-      <div class="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
-        <div>
-          <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-rose-300/40 bg-rose-500/15 px-3 py-1 text-xs font-semibold tracking-wide text-rose-100">
-            <Wrench class="h-3.5 w-3.5" />
-            Phone Repair Center • Open 7 Days
-          </p>
-          <h1 class="text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">
-            One Stop Solution for Reliable Repairs
-          </h1>
-          <p class="mt-4 max-w-xl text-sm text-slate-200 sm:text-base">
-            We bring expert services right to your doorstep. Hassle-free, affordable, and professional phone repairs — same-day service with a 12-month warranty.
-          </p>
-
-          <div class="mt-5 flex flex-wrap gap-2 text-xs font-semibold">
-            <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-slate-100">
-              <Smartphone class="h-3.5 w-3.5 text-sky-300" /> Cracked Screen
-            </span>
-            <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-slate-100">
-              <BatteryCharging class="h-3.5 w-3.5 text-emerald-300" /> Battery Drain
-            </span>
-            <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-slate-100">
-              <Zap class="h-3.5 w-3.5 text-amber-300" /> Not Charging
-            </span>
-            <span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-slate-100">
-              <Droplets class="h-3.5 w-3.5 text-cyan-300" /> Water Damage
-            </span>
-          </div>
-
-          <div class="mt-7 flex flex-wrap gap-3">
-            <a
-              :href="appointmentUrl"
-              class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-rose-500/30 transition hover:bg-rose-500"
-            >
-              Get Started
-            </a>
-            <NuxtLink
-              to="/services"
-              class="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              View Services
-            </NuxtLink>
-          </div>
-        </div>
-
-        <div class="rounded-3xl border border-white/20 bg-white/10 p-6 backdrop-blur">
-          <div class="grid grid-cols-2 gap-4">
-            <div class="rounded-2xl bg-slate-950/40 p-4">
-              <p class="text-xs text-slate-300">Average Turnaround</p>
-              <p class="mt-2 text-xl font-bold">45 min</p>
-            </div>
-            <div class="rounded-2xl bg-slate-950/40 p-4">
-              <p class="text-xs text-slate-300">12-Month Warranty</p>
-              <p class="mt-2 text-xl font-bold">Included</p>
-            </div>
-            <div class="rounded-2xl bg-slate-950/40 p-4">
-              <p class="text-xs text-slate-300">Devices Repaired</p>
-              <p class="mt-2 text-xl font-bold">15k+</p>
-            </div>
-            <div class="rounded-2xl bg-slate-950/40 p-4">
-              <p class="text-xs text-slate-300">Customer Rating</p>
-              <p class="mt-2 text-xl font-bold">4.9 / 5</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Core Features ─────────────────────────────────────── -->
-    <section class="border-b border-slate-100 bg-white px-4 py-12 dark:border-slate-800 dark:bg-slate-950 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Core Features</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white">Fast, Transparent and Trusted</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-500 dark:text-slate-400">
-          Discover key features that make your repair experience seamless, transparent, and trustworthy.
+    <!-- Page header -->
+    <section class="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 px-4 py-14 text-white sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl text-center">
+        <p class="inline-flex items-center gap-2 rounded-full border border-rose-300/30 bg-rose-500/15 px-3 py-1 text-xs font-semibold tracking-wide text-rose-200">
+          <Wrench class="h-3.5 w-3.5" /> Our Services
         </p>
-        <div class="mt-8 grid gap-4 sm:grid-cols-3">
-          <div class="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-900/40">
-              <CalendarCheck2 class="h-5 w-5 text-rose-600" />
-            </span>
-            <div>
-              <h3 class="font-semibold text-slate-900 dark:text-white">Service Booking</h3>
-              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Choose your preferred time and we'll be there to fix it, hassle-free.</p>
-            </div>
-          </div>
-          <div class="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/40">
-              <DollarSign class="h-5 w-5 text-emerald-600" />
-            </span>
-            <div>
-              <h3 class="font-semibold text-slate-900 dark:text-white">Transparent Pricing</h3>
-              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Know exactly what you'll pay. No hidden fees, just honest and fair service charges.</p>
-            </div>
-          </div>
-          <div class="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-900/40">
-              <BadgeCheck class="h-5 w-5 text-sky-600" />
-            </span>
-            <div>
-              <h3 class="font-semibold text-slate-900 dark:text-white">Certified Technicians</h3>
-              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Highly trained and certified — your devices are always in safe, expert hands.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Latest Services ──────────────────────────────────── -->
-    <section class="bg-slate-50 px-4 py-14 dark:bg-slate-900/30 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Services</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Latest Services</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-500 dark:text-slate-400">
-          Stay updated with our latest offerings, designed to meet all your repair needs efficiently and affordably.
+        <h1 class="mt-4 text-3xl font-extrabold sm:text-4xl">Expert Phone Repair Services</h1>
+        <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
+          From cracked screens to battery swaps and water damage treatment — all repairs backed by certified technicians and a 12-month warranty.
         </p>
-
-        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <article
-            v-for="service in featuredServices"
-            :key="service.id"
-            class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            :href="appointmentUrl"
+            class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
           >
-            <div class="relative overflow-hidden">
-              <img
-                :src="service.image"
-                :alt="service.name"
-                class="h-48 w-full object-cover transition duration-500 group-hover:scale-105"
-              >
-              <span class="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-rose-600 shadow backdrop-blur-sm dark:bg-slate-900/90 dark:text-rose-400">
-                {{ service.category }}
-              </span>
-            </div>
-            <div class="flex flex-1 flex-col p-4">
-              <h3 class="font-bold leading-snug text-slate-900 dark:text-white">{{ service.name }}</h3>
-              <p class="mt-1.5 flex-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{{ service.excerpt }}</p>
-              <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
-                <div>
-                  <p class="text-[11px] text-slate-400">Starting at</p>
-                  <p class="text-sm font-extrabold text-rose-600">${{ service.price }}.00 USD</p>
-                </div>
-                <NuxtLink
-                  to="/services"
-                  class="rounded-full bg-rose-600 px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-rose-500"
-                >
-                  View Detail
-                </NuxtLink>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        <div class="mt-8 flex justify-center">
-          <NuxtLink
-            to="/services"
-            class="rounded-full border border-slate-300 px-7 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            Book a Repair
+          </a>
+          <a
+            href="tel:+15551234567"
+            class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
           >
-            View All Services
-          </NuxtLink>
+            Call Us Now
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- ── About ─────────────────────────────────────────────── -->
-    <section class="bg-white px-4 py-14 dark:bg-slate-950 sm:px-6 lg:px-8">
-      <div class="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">About Us</p>
-          <h2 class="mt-2 text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">We Provide the Best Services</h2>
-          <p class="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
-            Empowering customers with cutting-edge repair solutions. At RapidFix, we streamline operations, enhance efficiency, and drive growth through innovative technology. Our dedicated team is committed to transforming device repair into a seamless, high-performance experience.
-          </p>
-          <ul class="mt-5 space-y-2.5">
-            <li v-for="item in ['Innovating repair solutions with OEM-grade parts', 'Transforming same-day service for walk-ins & bookings', 'Redefining the repair experience with full transparency', 'Next-level quality assurance — 35-point inspection']" :key="item" class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <CheckCircle2 class="h-4 w-4 shrink-0 text-emerald-600" />
-              {{ item }}
-            </li>
-          </ul>
-          <div class="mt-7 flex flex-wrap gap-3">
-            <a
-              :href="appointmentUrl"
-              class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
-            >
-              Book a Repair
-            </a>
-            <NuxtLink
-              to="/services"
-              class="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Our Services
-            </NuxtLink>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <img src="https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=900&q=80" alt="Technician repairing phone" class="h-48 w-full rounded-2xl object-cover">
-          <img src="https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?auto=format&fit=crop&w=900&q=80" alt="Phone repair workshop" class="h-48 w-full translate-y-6 rounded-2xl object-cover">
-          <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80" alt="Team working" class="h-48 w-full -translate-y-3 rounded-2xl object-cover">
-          <img src="https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=900&q=80" alt="Battery replacement" class="h-48 w-full translate-y-3 rounded-2xl object-cover">
-        </div>
-      </div>
-    </section>
-
-    <!-- ── How It Works ──────────────────────────────────────── -->
-    <section class="bg-slate-50 px-4 py-14 dark:bg-slate-900/30 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Work Process</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">How We Work</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-500 dark:text-slate-400">
-          Streamline every step with our efficient processes for superior service center management.
-        </p>
-        <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <article v-for="(step, i) in [
-            { icon: CalendarCheck2, title: 'Easy Online Booking', desc: 'Schedule your repair easily with our online system — takes under a minute.', highlight: false },
-            { icon: LocateFixed, title: 'Home Fix Available', desc: 'After booking, choose in-home repair — our technician comes to you with all tools and parts ready.', highlight: true },
-            { icon: Wrench, title: 'Fast & Reliable Repair', desc: 'Swift and dependable repairs using genuine OEM-grade parts.', highlight: false },
-            { icon: CheckCircle2, title: 'Quality Assurance', desc: 'Every repair is tested against 35+ checkpoints before handoff.', highlight: false },
-          ]" :key="i" class="rounded-2xl border p-5 transition"
-            :class="step.highlight
-              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/30'
-              : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'"
-          >
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl"
-              :class="step.highlight ? 'bg-emerald-100 dark:bg-emerald-900/50' : 'bg-rose-100 dark:bg-rose-900/40'"
-            >
-              <component :is="step.icon" class="h-5 w-5"
-                :class="step.highlight ? 'text-emerald-600' : 'text-rose-600'"
-              />
-            </span>
-            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">{{ i + 1 }}. {{ step.title }}</h3>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">{{ step.desc }}</p>
-            <a
-              v-if="step.highlight"
-              :href="appointmentUrl"
-              class="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400"
-            >
-              Book Home Repair →
-            </a>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Premier Features ──────────────────────────────────── -->
-    <section class="bg-white px-4 py-14 dark:bg-slate-950 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Features</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Discover Our Premier Features</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-500 dark:text-slate-400">
-          Explore the exceptional services and benefits we offer to ensure top-quality repairs and an unmatched customer experience.
-        </p>
-        <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <article
-            v-for="feature in features"
-            :key="feature.title"
-            class="rounded-2xl border border-slate-100 bg-slate-50 p-5 transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
-          >
-            <span :class="[feature.bg, 'inline-flex h-10 w-10 items-center justify-center rounded-xl']">
-              <component :is="feature.icon" :class="[feature.color, 'h-5 w-5']" />
-            </span>
-            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">{{ feature.title }}</h3>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">{{ feature.desc }}</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Testimonials ─────────────────────────────────────── -->
-    <section class="bg-slate-50 px-4 py-14 dark:bg-slate-900/30 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Feedback</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">What People Say About Us</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-500 dark:text-slate-400">
-          Your feedback helps us improve and ensures better experiences for every customer.
-        </p>
-        <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <blockquote
-            v-for="(t, i) in testimonials.slice(0, 3)"
-            :key="i"
-            class="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div class="mb-3 flex gap-0.5">
-              <Star v-for="s in t.rating" :key="s" class="h-4 w-4 fill-amber-400 text-amber-400" />
-            </div>
-            <p class="flex-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">"{{ t.text }}"</p>
-            <footer class="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800">
-              <p class="font-bold text-slate-900 dark:text-white">{{ t.name }}</p>
-              <p class="text-xs text-slate-500 dark:text-slate-400">{{ t.role }}</p>
-            </footer>
-          </blockquote>
-        </div>
-        <div class="mt-5 grid gap-5 sm:grid-cols-2">
-          <blockquote
-            v-for="(t, i) in testimonials.slice(3)"
-            :key="i"
-            class="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div class="mb-3 flex gap-0.5">
-              <Star v-for="s in t.rating" :key="s" class="h-4 w-4 fill-amber-400 text-amber-400" />
-            </div>
-            <p class="flex-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">"{{ t.text }}"</p>
-            <footer class="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800">
-              <p class="font-bold text-slate-900 dark:text-white">{{ t.name }}</p>
-              <p class="text-xs text-slate-500 dark:text-slate-400">{{ t.role }}</p>
-            </footer>
-          </blockquote>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Achievement Stats ─────────────────────────────────── -->
-    <section class="relative overflow-hidden bg-gradient-to-r from-rose-600 to-rose-500 px-4 py-14 text-white sm:px-6 lg:px-8">
-      <div class="absolute inset-0" style="background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0, rgba(255,255,255,0.04) 1px, transparent 0, transparent 50%); background-size: 12px 12px;" />
-      <div class="relative mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-200">Achievement</p>
-        <h2 class="mt-2 text-center text-2xl font-bold sm:text-3xl">Our Awesome Achievement</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-rose-100">
-          Showcasing milestones and success that reflect our commitment to excellence and client satisfaction.
-        </p>
-        <div class="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4">
-          <div v-for="stat in achievements" :key="stat.label" class="rounded-2xl bg-white/15 p-6 text-center backdrop-blur">
-            <p class="text-3xl font-extrabold sm:text-4xl">{{ stat.value }}</p>
-            <p class="mt-2 text-sm font-semibold text-rose-100">{{ stat.label }}</p>
-          </div>
-        </div>
-        <div class="mt-8 flex justify-center">
-          <NuxtLink
-            to="/about"
-            class="inline-flex items-center justify-center rounded-full border border-white/50 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
-          >
-            Want to learn more about us? Click here
-          </NuxtLink>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Team ──────────────────────────────────────────────── -->
-    <section class="bg-white px-4 py-14 dark:bg-slate-950 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Team</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Meet Our Expert Team</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-500 dark:text-slate-400">
-          Get to know the skilled professionals dedicated to providing exceptional service and ensuring your satisfaction.
-        </p>
-        <div class="mt-10 grid gap-5 sm:grid-cols-3">
-          <article
-            v-for="member in team"
-            :key="member.name"
-            class="group overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div class="overflow-hidden">
-              <img
-                :src="member.image"
-                :alt="member.name"
-                class="h-56 w-full object-cover object-top transition duration-300 group-hover:scale-105"
-              >
-            </div>
-            <div class="p-5 text-center">
-              <h3 class="font-bold text-slate-900 dark:text-white">{{ member.name }}</h3>
-              <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{{ member.role }}</p>
-              <div class="mt-3 flex justify-center gap-0.5">
-                <Star v-for="i in 5" :key="i" class="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── FAQ ───────────────────────────────────────────────── -->
-    <section class="bg-slate-50 px-4 py-14 dark:bg-slate-900/30 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">FAQ</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">People Asked Some Questions</h2>
-        <div class="mx-auto mt-8 max-w-3xl space-y-3">
+    <!-- ── Mobile: category strip + filter sheet trigger (hidden lg+) ── -->
+    <div
+      class="sticky top-14 z-30 border-b border-slate-200/90 bg-white/95 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 lg:hidden"
+    >
+      <div class="flex items-stretch gap-2 px-3 py-2.5 sm:px-4">
+        <div class="relative min-w-0 flex-1">
           <div
-            v-for="(faq, i) in faqs"
-            :key="i"
-            class="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+            class="pointer-events-none absolute inset-y-0 left-0 z-10 w-5 bg-gradient-to-r from-white to-transparent dark:from-slate-950"
+            aria-hidden="true"
+          />
+          <div
+            class="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-white to-transparent dark:from-slate-950"
+            aria-hidden="true"
+          />
+          <div
+            class="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-pl-3 scroll-pr-3 px-1 py-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             <button
+              v-for="cat in categories"
+              :key="cat"
               type="button"
-              class="flex w-full items-center justify-between p-4 text-left font-semibold text-slate-900 dark:text-white"
-              @click="openFaq = openFaq === i ? null : i"
+              class="snap-start scroll-ml-0 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98]"
+              :class="
+                activeCategory === cat
+                  ? 'bg-rose-600 text-white shadow-md shadow-rose-600/25'
+                  : 'bg-slate-100 text-slate-800 ring-1 ring-slate-200/80 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700'
+              "
+              @click="activeCategory = cat"
             >
-              <span>{{ faq.q }}</span>
-              <span class="ml-4 shrink-0 text-slate-400 transition-transform" :class="openFaq === i ? 'rotate-45' : ''">+</span>
+              {{ cat === 'All Categories' ? 'All' : cat }}
             </button>
-            <div v-if="openFaq === i" class="border-t border-slate-100 px-4 pb-4 pt-2 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
-              {{ faq.a }}
+          </div>
+        </div>
+        <button
+          type="button"
+          class="relative inline-flex min-h-[44px] min-w-[44px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl border px-3 text-[11px] font-bold uppercase tracking-wide transition active:scale-[0.98]"
+          :class="
+            mobileFiltersOpen || activeFilterCount > 0
+              ? 'border-rose-500 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-950/50 dark:text-rose-300'
+              : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+          "
+          aria-haspopup="dialog"
+          :aria-expanded="mobileFiltersOpen"
+          @click="mobileFiltersOpen = true"
+        >
+          <SlidersHorizontal class="h-5 w-5" aria-hidden="true" />
+          <span class="leading-none">More</span>
+          <span
+            v-if="activeFilterCount > 0"
+            class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white shadow-sm"
+          >{{ activeFilterCount }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Mobile filter bottom sheet (sort + tags) ─────────────────── -->
+    <Teleport to="body">
+      <div
+        class="fixed inset-0 z-[60] lg:hidden"
+        :class="mobileFiltersOpen ? 'pointer-events-auto' : 'pointer-events-none'"
+        role="presentation"
+      >
+        <div
+          class="absolute inset-0 bg-slate-900/50 backdrop-blur-[3px] transition-opacity duration-300"
+          :class="mobileFiltersOpen ? 'opacity-100' : 'opacity-0'"
+          aria-hidden="true"
+          @click="closeMobileFilters"
+        />
+        <div
+          class="absolute inset-x-0 bottom-0 flex max-h-[min(88dvh,640px)] flex-col rounded-t-[1.25rem] bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] ring-1 ring-slate-200/80 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-slate-900 dark:ring-slate-700"
+          :class="mobileFiltersOpen ? 'translate-y-0' : 'translate-y-full'"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-filters-title"
+        >
+          <div class="flex shrink-0 flex-col items-center pt-2 pb-1">
+            <div class="h-1 w-12 rounded-full bg-slate-300 dark:bg-slate-600" aria-hidden="true" />
+          </div>
+          <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 pb-3 pt-1 dark:border-slate-800">
+            <div>
+              <h2 id="mobile-filters-title" class="text-lg font-bold text-slate-900 dark:text-white">
+                Sort &amp; refine
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                {{ filteredServices.length }} service{{ filteredServices.length !== 1 ? 's' : '' }} match
+              </p>
             </div>
+            <button
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              aria-label="Close filters"
+              @click="closeMobileFilters"
+            >
+              <X class="h-5 w-5" />
+            </button>
+          </div>
+
+          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+            <p class="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Phone brand</p>
+            <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">Choose a brand or show all services.</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="cat in categories"
+                :key="cat"
+                type="button"
+                class="rounded-full border px-3.5 py-2.5 text-sm font-semibold transition active:scale-[0.98]"
+                :class="
+                  activeCategory === cat
+                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20'
+                    : 'border-slate-200 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
+                "
+                @click="activeCategory = cat"
+              >
+                {{ cat === 'All Categories' ? 'All brands' : cat }}
+              </button>
+            </div>
+
+            <p class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-slate-400">Sort by price</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="opt in sortOptions"
+                :key="opt.value"
+                type="button"
+                class="rounded-full border px-3.5 py-2.5 text-sm font-semibold transition active:scale-[0.98]"
+                :class="
+                  activeSort === opt.value
+                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20'
+                    : 'border-slate-200 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
+                "
+                @click="activeSort = opt.value"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
+
+            <p class="mb-2 mt-6 text-xs font-bold uppercase tracking-wider text-slate-400">Popular tags</p>
+            <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">Tap one tag to narrow results. Tap again to clear.</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="tag in popularTags"
+                :key="tag"
+                type="button"
+                class="rounded-full border px-3.5 py-2 text-sm font-medium transition active:scale-[0.98]"
+                :class="
+                  activeTag === tag
+                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20'
+                    : 'border-slate-200 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
+                "
+                @click="toggleTag(tag)"
+              >
+                {{ tag }}
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="shrink-0 border-t border-slate-100 bg-white px-4 pt-3 dark:border-slate-800 dark:bg-slate-900"
+            style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))"
+          >
+            <div class="flex gap-3">
+              <button
+                v-if="activeFilterCount > 0"
+                type="button"
+                class="flex min-h-12 flex-1 items-center justify-center rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.99] dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="clearAllFilters"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                class="flex min-h-12 min-w-0 items-center justify-center rounded-xl bg-rose-600 text-sm font-bold text-white shadow-lg shadow-rose-600/25 transition hover:bg-rose-500 active:scale-[0.99]"
+                :class="activeFilterCount > 0 ? 'flex-[2]' : 'w-full flex-1'"
+                @click="closeMobileFilters"
+              >
+                Show {{ filteredServices.length }} result{{ filteredServices.length !== 1 ? 's' : '' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Sidebar + Grid layout -->
+    <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div class="flex flex-col gap-8 lg:flex-row lg:items-start">
+
+        <!-- ── Sidebar (desktop only) ────────────────────────── -->
+        <aside class="hidden w-72 shrink-0 space-y-6 lg:sticky lg:top-24 lg:block">
+
+          <!-- Categories -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Categories</h3>
+            <ul class="space-y-1">
+              <li v-for="cat in categories" :key="cat">
+                <button
+                  type="button"
+                  class="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition"
+                  :class="
+                    activeCategory === cat
+                      ? 'bg-rose-600 text-white font-semibold'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  "
+                  @click="activeCategory = cat"
+                >
+                  {{ cat }}
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Sort By -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Sort By</h3>
+            <ul class="space-y-1">
+              <li v-for="opt in sortOptions" :key="opt.value">
+                <button
+                  type="button"
+                  class="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition"
+                  :class="
+                    activeSort === opt.value
+                      ? 'bg-rose-600 text-white font-semibold'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  "
+                  @click="activeSort = opt.value"
+                >
+                  {{ opt.label }}
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Popular Tags -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+              <Tag class="h-3.5 w-3.5 text-rose-500" /> Popular Tags
+            </h3>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="tag in popularTags"
+                :key="tag"
+                type="button"
+                class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+                :class="
+                  activeTag === tag
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-slate-100 text-slate-700 hover:bg-rose-100 hover:text-rose-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-rose-900/40 dark:hover:text-rose-300'
+                "
+                @click="toggleTag(tag)"
+              >
+                {{ tag }}
+              </button>
+            </div>
+            <button
+              v-if="activeTag"
+              type="button"
+              class="mt-3 text-xs font-semibold text-rose-600 hover:underline dark:text-rose-400"
+              @click="activeTag = null"
+            >
+              Clear tag filter
+            </button>
+          </div>
+        </aside>
+
+        <!-- ── Services Grid ──────────────────────────────────── -->
+        <div class="min-w-0 flex-1">
+          <div class="mb-5 flex items-center justify-between">
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              Showing
+              <span class="font-semibold text-slate-900 dark:text-white">
+                {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(currentPage * PAGE_SIZE, filteredServices.length) }}
+              </span>
+              of
+              <span class="font-semibold text-slate-900 dark:text-white">{{ filteredServices.length }}</span>
+              service{{ filteredServices.length !== 1 ? 's' : '' }}
+            </p>
+            <button
+              v-if="activeFilterCount > 0"
+              type="button"
+              class="hidden items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 lg:inline-flex"
+              @click="clearAllFilters"
+            >
+              <X class="h-3 w-3" /> Clear filters
+            </button>
+          </div>
+
+          <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <article
+              v-for="service in paginatedServices"
+              :key="service.id"
+              class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
+            >
+              <!-- Image with overlaid category badge -->
+              <div class="relative overflow-hidden">
+                <img
+                  :src="service.image"
+                  :alt="service.name"
+                  class="h-52 w-full object-cover transition duration-500 group-hover:scale-105"
+                >
+                <span class="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-rose-600 shadow backdrop-blur-sm dark:bg-slate-900/90 dark:text-rose-400">
+                  {{ service.category }}
+                </span>
+              </div>
+
+              <!-- Card body -->
+              <div class="flex flex-1 flex-col p-5">
+                <h3 class="font-bold text-slate-900 dark:text-white">{{ service.name }}</h3>
+                <p class="mt-1.5 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">{{ service.description }}</p>
+
+                <!-- Badges -->
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                  <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    <Clock3 class="h-3 w-3 shrink-0" /> {{ service.eta }}
+                  </span>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <ShieldCheck class="h-3 w-3 shrink-0" /> {{ service.warranty }} warranty
+                  </span>
+                </div>
+
+                <!-- Price + CTA -->
+                <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3.5 dark:border-slate-800">
+                  <p class="text-sm font-bold text-slate-900 dark:text-white">
+                    Starting at <span class="text-rose-600">{{ formatPrice(service.price) }}</span>
+                  </p>
+                  <a
+                    :href="appointmentUrl"
+                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-rose-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-rose-500 active:scale-95"
+                  >
+                    <BadgeCheck class="h-3.5 w-3.5" /> Book Now
+                  </a>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Empty state -->
+          <div v-if="filteredServices.length === 0" class="py-20 text-center text-slate-400">
+            No services found for the selected filters.
+          </div>
+
+          <!-- ── Pagination ──────────────────────────────────── -->
+          <div v-if="totalPages > 1" class="mt-10 flex items-center justify-center gap-1.5">
+            <!-- Prev -->
+            <button
+              type="button"
+              :disabled="currentPage === 1"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-rose-500 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              @click="goToPage(currentPage - 1)"
+            >
+              <ChevronLeft class="h-4 w-4" />
+            </button>
+
+            <!-- Page numbers -->
+            <template v-for="(p, i) in pageNumbers" :key="i">
+              <span v-if="p === '…'" class="px-1 text-sm text-slate-400">…</span>
+              <button
+                v-else
+                type="button"
+                class="inline-flex h-9 min-w-[2.25rem] items-center justify-center rounded-full border text-sm font-semibold transition"
+                :class="
+                  currentPage === p
+                    ? 'border-rose-600 bg-rose-600 text-white'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-rose-400 hover:text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                "
+                @click="goToPage(p as number)"
+              >
+                {{ p }}
+              </button>
+            </template>
+
+            <!-- Next -->
+            <button
+              type="button"
+              :disabled="currentPage === totalPages"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-rose-500 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              @click="goToPage(currentPage + 1)"
+            >
+              <ChevronRight class="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ── Blog Teaser ────────────────────────────────────────── -->
-    <section class="bg-white px-4 py-14 dark:bg-slate-950 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Blog</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Latest Blog</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-500 dark:text-slate-400">
-          Stay informed with the latest industry trends, tips, and updates from our knowledgeable team.
+    <!-- CTA banner -->
+    <section class="bg-slate-900 px-4 py-12 text-white sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-3xl text-center">
+        <CheckCircle2 class="mx-auto h-10 w-10 text-emerald-400" />
+        <h2 class="mt-4 text-2xl font-bold">Not Sure Which Service You Need?</h2>
+        <p class="mt-2 text-sm text-slate-300">
+          Book a free diagnosis visit. Our technicians will assess your device and recommend the right repair with no obligation.
         </p>
-        <div class="mt-10 grid gap-5 sm:grid-cols-3">
-          <article
-            v-for="post in blogPosts"
-            :key="post.id"
-            class="group overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            :href="appointmentUrl"
+            class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
           >
-            <div class="overflow-hidden">
-              <img :src="post.image" :alt="post.title" class="h-48 w-full object-cover transition duration-300 group-hover:scale-105">
-            </div>
-            <div class="p-5">
-              <p class="text-xs text-slate-400">{{ post.date }}</p>
-              <h3 class="mt-2 font-bold leading-snug text-slate-900 dark:text-white">{{ post.title }}</h3>
-              <p class="mt-2 line-clamp-3 text-sm text-slate-600 dark:text-slate-300">{{ post.excerpt }}</p>
-              <NuxtLink to="/blog" class="mt-4 inline-flex items-center text-xs font-bold uppercase tracking-wide text-rose-600 hover:text-rose-500 dark:text-rose-400">
-                Read More →
-              </NuxtLink>
-            </div>
-          </article>
-        </div>
-        <div class="mt-8 flex justify-center">
-          <NuxtLink to="/blog" class="rounded-full border border-slate-300 px-7 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
-            View All Posts
+            Book Free Diagnosis
+          </a>
+          <NuxtLink
+            to="/contact"
+            class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+          >
+            Contact Us
           </NuxtLink>
         </div>
       </div>
     </section>
-
-    <!-- ── Bottom Stats ──────────────────────────────────────── -->
-    <section class="bg-slate-900 px-4 py-10 text-white sm:px-6 lg:px-8">
-      <div class="mx-auto grid max-w-7xl grid-cols-2 gap-6 sm:grid-cols-4">
-        <div v-for="stat in [
-          { value: '50+', label: 'Services Offered' },
-          { value: '15k+', label: 'Satisfied Customers' },
-          { value: '15k+', label: 'Repairs Completed' },
-          { value: '8+', label: 'Years of Experience' },
-        ]" :key="stat.label" class="text-center">
-          <p class="text-2xl font-extrabold text-rose-400 sm:text-3xl">{{ stat.value }}</p>
-          <p class="mt-1 text-xs font-semibold text-slate-400">{{ stat.label }}</p>
-        </div>
-      </div>
-    </section>
-
-    <a
-      href="tel:+15551234567"
-      class="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-rose-500/30 sm:hidden"
-    >
-      <PhoneCall class="h-4 w-4" />
-      Call
-    </a>
   </div>
 </template>

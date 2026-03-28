@@ -114,7 +114,7 @@ const stats = [
               Book a Repair
             </a>
             <NuxtLink
-              to="/services"
+              to="/"
               class="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Our Services
