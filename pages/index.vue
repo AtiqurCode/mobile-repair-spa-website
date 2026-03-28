@@ -758,49 +758,56 @@ function closeMobileFilters() {
             </button>
           </div>
 
-          <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div class="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-3 xl:gap-6">
             <article
               v-for="service in paginatedServices"
               :key="service.id"
-              class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
+              class="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 xl:rounded-2xl"
             >
               <!-- Image with overlaid category badge -->
               <div class="relative overflow-hidden">
                 <img
                   :src="service.image"
                   :alt="service.name"
-                  class="h-52 w-full object-cover transition duration-500 group-hover:scale-105"
+                  class="h-32 w-full object-cover transition duration-500 group-hover:scale-105 sm:h-40 xl:h-52"
                 >
-                <span class="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-rose-600 shadow backdrop-blur-sm dark:bg-slate-900/90 dark:text-rose-400">
+                <span class="absolute left-1.5 top-1.5 max-w-[calc(100%-0.75rem)] truncate rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-rose-600 shadow backdrop-blur-sm dark:bg-slate-900/90 dark:text-rose-400 xl:left-3 xl:top-3 xl:max-w-none xl:px-2.5 xl:py-1 xl:text-[11px]">
                   {{ service.category }}
                 </span>
               </div>
 
               <!-- Card body -->
-              <div class="flex flex-1 flex-col p-5">
-                <h3 class="font-bold text-slate-900 dark:text-white">{{ service.name }}</h3>
-                <p class="mt-1.5 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">{{ service.description }}</p>
+              <div class="flex flex-1 flex-col p-2.5 sm:p-3 xl:p-5">
+                <h3 class="line-clamp-2 text-xs font-bold leading-snug text-slate-900 dark:text-white sm:text-sm xl:text-base">
+                  {{ service.name }}
+                </h3>
+                <p class="mt-1 line-clamp-2 text-[10px] text-slate-500 dark:text-slate-400 sm:text-xs xl:mt-1.5 xl:text-sm">
+                  {{ service.description }}
+                </p>
 
                 <!-- Badges -->
-                <div class="mt-3 flex flex-wrap gap-1.5">
-                  <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    <Clock3 class="h-3 w-3 shrink-0" /> {{ service.eta }}
+                <div class="mt-2 flex flex-wrap gap-1 xl:mt-3 xl:gap-1.5">
+                  <span class="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300 xl:gap-1 xl:px-2.5 xl:py-1 xl:text-xs">
+                    <Clock3 class="h-2.5 w-2.5 shrink-0 xl:h-3 xl:w-3" /> {{ service.eta }}
                   </span>
-                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                    <ShieldCheck class="h-3 w-3 shrink-0" /> {{ service.warranty }} warranty
+                  <span class="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 xl:gap-1 xl:px-2.5 xl:py-1 xl:text-xs">
+                    <ShieldCheck class="h-2.5 w-2.5 shrink-0 xl:h-3 xl:w-3" /> {{ service.warranty }}
                   </span>
                 </div>
 
                 <!-- Price + CTA -->
-                <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3.5 dark:border-slate-800">
-                  <p class="text-sm font-bold text-slate-900 dark:text-white">
-                    Starting at <span class="text-rose-600">{{ formatPrice(service.price) }}</span>
+                <div class="mt-auto flex flex-col gap-2 border-t border-slate-100 pt-2.5 dark:border-slate-800 xl:mt-4 xl:flex-row xl:items-center xl:justify-between xl:pt-3.5">
+                  <p class="text-[11px] font-bold leading-tight text-slate-900 dark:text-white xl:text-sm">
+                    <span class="xl:hidden">From </span>
+                    <span class="hidden xl:inline">Starting at </span>
+                    <span class="text-rose-600">{{ formatPrice(service.price) }}</span>
                   </p>
                   <a
                     :href="appointmentUrl"
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-rose-600 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-rose-500 active:scale-95"
+                    class="inline-flex w-full items-center justify-center gap-1 rounded-full bg-rose-600 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-rose-500 active:scale-95 sm:gap-1.5 sm:text-xs xl:w-auto xl:shrink-0 xl:px-3.5"
                   >
-                    <BadgeCheck class="h-3.5 w-3.5" /> Book Now
+                    <BadgeCheck class="h-3 w-3 shrink-0 xl:h-3.5 xl:w-3.5" />
+                    <span>Book</span><span class="hidden sm:inline"> Now</span>
                   </a>
                 </div>
               </div>
