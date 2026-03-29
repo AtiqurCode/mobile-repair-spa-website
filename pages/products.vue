@@ -410,12 +410,12 @@ const badgeClasses: Record<string, string> = {
 
                 <!-- CTA -->
                 <div class="mt-6 flex gap-3">
-                  <a
-                    href="https://samiul.crm.prosaas.org/public/lead"
+                  <NuxtLink
+                    to="/book"
                     class="flex-1 rounded-full bg-rose-600 py-3 text-center text-sm font-semibold text-white transition hover:bg-rose-500"
                   >
                     Order &amp; Book Fitment
-                  </a>
+                  </NuxtLink>
                   <button
                     type="button"
                     class="rounded-full border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"

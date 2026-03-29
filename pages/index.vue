@@ -25,8 +25,6 @@ import {
 
 useHead({ title: 'RapidFix Phone Repair — Expert Repairs & Same-Day Service' })
 
-const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
-
 const categories = ['All Categories', 'iPhone', 'Samsung', 'Google Pixel', 'General']
 const activeCategory = ref('All Categories')
 
@@ -346,6 +344,39 @@ const services = [
   },
 ]
 
+/** Maps catalog category → book page “Phone brand” select value */
+function mapCategoryToBookingBrand(category: string) {
+  if (category === 'iPhone' || category === 'Samsung' || category === 'Google Pixel') return category
+  return 'Other / Mixed'
+}
+
+/** Maps catalog service title → book page “Service needed” select value */
+function mapServiceNameToBookingService(name: string): string {
+  const n = name.toLowerCase()
+  if (n.includes('water damage')) return 'Water Damage Treatment'
+  if (n.includes('screen protector')) return 'Other'
+  if (n.includes('screen') && n.includes('replacement')) return 'Screen Replacement'
+  if (n.includes('battery')) return 'Battery Replacement'
+  if (n.includes('charging port') || n.includes('charging port fix')) return 'Charging Port Repair'
+  if (n.includes('camera')) return 'Camera Repair'
+  if (n.includes('microphone')) return 'Speaker / Microphone Repair'
+  if (n.includes('speaker') || n.includes('earpiece')) return 'Speaker / Microphone Repair'
+  if (n.includes('wi-fi') || n.includes('bluetooth')) return 'Wi-Fi / Bluetooth Repair'
+  if (n.includes('back glass') || n.includes('back cover')) return 'Back Glass / Housing'
+  if (n.includes('face id') || n.includes('touch id')) return 'Other'
+  if (n.includes('power') && n.includes('volume')) return 'Other'
+  if (n.includes('sim') || n.includes('microsd')) return 'Other'
+  return 'Diagnostic / Not Sure'
+}
+
+function bookingQueryForService(service: (typeof services)[number]) {
+  return {
+    brand: mapCategoryToBookingBrand(service.category),
+    service: mapServiceNameToBookingService(service.name),
+    detail: service.name,
+  }
+}
+
 // ── Pagination ─────────────────────────────────────────────
 const PAGE_SIZE = 9
 const currentPage = ref(1)
@@ -457,12 +488,12 @@ function closeMobileFilters() {
           From cracked screens to battery swaps and water damage treatment — all repairs backed by certified technicians and a 12-month warranty.
         </p>
         <div class="mt-6 flex flex-wrap justify-center gap-3">
-          <a
-            :href="appointmentUrl"
+          <NuxtLink
+            to="/book"
             class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
           >
             Book a Repair
-          </a>
+          </NuxtLink>
           <a
             href="tel:+15551234567"
             class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
@@ -802,13 +833,13 @@ function closeMobileFilters() {
                     <span class="hidden xl:inline">Starting at </span>
                     <span class="text-rose-600">{{ formatPrice(service.price) }}</span>
                   </p>
-                  <a
-                    :href="appointmentUrl"
+                  <NuxtLink
+                    :to="{ path: '/book', query: bookingQueryForService(service) }"
                     class="inline-flex w-full items-center justify-center gap-1 rounded-full bg-rose-600 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-rose-500 active:scale-95 sm:gap-1.5 sm:text-xs xl:w-auto xl:shrink-0 xl:px-3.5"
                   >
                     <BadgeCheck class="h-3 w-3 shrink-0 xl:h-3.5 xl:w-3.5" />
                     <span>Book</span><span class="hidden sm:inline"> Now</span>
-                  </a>
+                  </NuxtLink>
                 </div>
               </div>
             </article>
@@ -872,12 +903,12 @@ function closeMobileFilters() {
           Book a free diagnosis visit. Our technicians will assess your device and recommend the right repair with no obligation.
         </p>
         <div class="mt-6 flex flex-wrap justify-center gap-3">
-          <a
-            :href="appointmentUrl"
+          <NuxtLink
+            to="/book"
             class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
           >
             Book Free Diagnosis
-          </a>
+          </NuxtLink>
           <NuxtLink
             to="/contact"
             class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"

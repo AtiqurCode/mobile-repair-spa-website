@@ -27,8 +27,11 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
+    /** Optional: Zapier / Make / Slack webhook URL to receive JSON booking payloads */
+    bookingWebhookUrl: process.env.NUXT_BOOKING_WEBHOOK_URL || '',
     public: {
-      bookingUrl: 'https://samiul.crm.prosaas.org/public/lead'
+      /** Shown on booking success; used in mailto links site-wide */
+      contactEmail: 'hello@rapidfix.com'
     }
   }
 })

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import {  Mail, MapPin, Phone } from 'lucide-vue-next'
+import { Mail, MapPin, Phone } from 'lucide-vue-next'
 
-const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
 </script>
 
 <template>
@@ -15,12 +14,12 @@ const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
           <MapPin class="mr-1 inline h-3.5 w-3.5" />120 Tech Avenue, Downtown — Open 7 days, 9AM–9PM
         </p>
       </div>
-      <a
-        :href="appointmentUrl"
+      <NuxtLink
+        to="/book"
         class="inline-flex shrink-0 items-center justify-center rounded-full bg-white px-7 py-3 text-sm font-bold text-rose-600 shadow-lg transition hover:bg-rose-50"
       >
-        Book Appointment
-      </a>
+        Book appointment
+      </NuxtLink>
     </div>
   </section>
 
@@ -47,6 +46,7 @@ const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
           <ul class="space-y-2 text-sm">
             <li><NuxtLink to="/" class="transition hover:text-white">Services</NuxtLink></li>
             <li><NuxtLink to="/about" class="transition hover:text-white">About Us</NuxtLink></li>
+            <li><NuxtLink to="/book" class="transition hover:text-white">Book appointment</NuxtLink></li>
             <li><NuxtLink to="/contact" class="transition hover:text-white">Contact Us</NuxtLink></li>
           </ul>
         </div>

@@ -12,8 +12,6 @@ import {
 
 useHead({ title: 'About Us — RapidFix Phone Repair' })
 
-const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
-
 const faqs = [
   {
     question: 'How can I get started with RapidFix?',
@@ -97,12 +95,12 @@ const stats = [
           </ul>
 
           <div class="mt-8 flex flex-wrap gap-3">
-            <a
-              :href="appointmentUrl"
+            <NuxtLink
+              to="/book"
               class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
             >
               Book a Repair
-            </a>
+            </NuxtLink>
             <NuxtLink
               to="/"
               class="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"

@@ -2,7 +2,6 @@
 import { CalendarCheck2, Menu, Moon, PhoneCall, Smartphone, Sun, X } from 'lucide-vue-next'
 
 const colorMode = useColorMode()
-const appointmentUrl = 'https://samiul.crm.prosaas.org/public/lead'
 const mobileMenuOpen = ref(false)
 
 const toggleTheme = () => {
@@ -54,13 +53,13 @@ const navLinks = [
             <Sun v-if="colorMode.value === 'dark'" class="h-4 w-4" />
             <Moon v-else class="h-4 w-4" />
           </button>
-          <a
-            :href="appointmentUrl"
+          <NuxtLink
+            to="/book"
             class="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
           >
             <CalendarCheck2 class="h-4 w-4" />
             <span class="hidden sm:inline">Appointment</span>
-          </a>
+          </NuxtLink>
           <a
             href="tel:+15551234567"
             class="hidden items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-500/30 transition hover:bg-rose-500 sm:inline-flex"
