@@ -6,7 +6,6 @@ import {
   Globe2,
   Recycle,
   ShieldCheck,
-  Star,
   Wrench,
   Zap
 } from 'lucide-vue-next'
@@ -44,15 +43,6 @@ const openFaq = ref<number | null>(0)
 function toggleFaq(index: number) {
   openFaq.value = openFaq.value === index ? null : index
 }
-
-const team = [
-  { name: 'Alex Carter', role: 'Network & Connectivity Specialist', image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Sarah Thompson', role: 'Screen Repair Specialist', image: 'https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Mark Davis', role: 'Smart Device Technician', image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Grace Robinson', role: 'Computer Hardware Engineer', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Daniel Park', role: 'Water Damage Expert', image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=400&q=80' },
-  { name: 'Lisa Chen', role: 'Quality Assurance Lead', image: 'https://images.unsplash.com/photo-1499952127939-9bbf5af6c51c?auto=format&fit=crop&w=400&q=80' },
-]
 
 const stats = [
   { value: '8+', label: 'Services Offered (types)' },
@@ -238,40 +228,6 @@ const stats = [
               {{ faq.answer }}
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Team -->
-    <section class="bg-slate-50 px-4 py-14 dark:bg-slate-900/30 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Team</p>
-        <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Meet Our Expert Team</h2>
-        <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-500 dark:text-slate-400">
-          Get to know the skilled professionals dedicated to providing exceptional service and ensuring complete satisfaction.
-        </p>
-
-        <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <article
-            v-for="member in team"
-            :key="member.name"
-            class="group overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div class="overflow-hidden">
-              <img
-                :src="member.image"
-                :alt="member.name"
-                class="h-56 w-full object-cover object-top transition duration-300 group-hover:scale-105"
-              >
-            </div>
-            <div class="p-5 text-center">
-              <h3 class="font-bold text-slate-900 dark:text-white">{{ member.name }}</h3>
-              <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{{ member.role }}</p>
-              <div class="mt-3 flex justify-center gap-1">
-                <Star v-for="i in 5" :key="i" class="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              </div>
-            </div>
-          </article>
         </div>
       </div>
     </section>
