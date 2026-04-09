@@ -45,6 +45,7 @@ import { Mail, MapPin, Phone } from 'lucide-vue-next'
           <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Useful Links</h3>
           <ul class="space-y-2 text-sm">
             <li><NuxtLink to="/" class="transition hover:text-white">Services</NuxtLink></li>
+            <li><NuxtLink to="/accessories" class="transition hover:text-white">Accessories</NuxtLink></li>
             <li><NuxtLink to="/about" class="transition hover:text-white">About Us</NuxtLink></li>
             <li><NuxtLink to="/book" class="transition hover:text-white">Book appointment</NuxtLink></li>
             <li><NuxtLink to="/contact" class="transition hover:text-white">Contact Us</NuxtLink></li>

@@ -3,7 +3,6 @@ import {
   BadgeCheck,
   BatteryCharging,
   Camera,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -22,6 +21,7 @@ import {
   X,
   Zap
 } from 'lucide-vue-next'
+import PreviewModal, { type PreviewBadge } from '~/components/PreviewModal.vue'
 
 useHead({ title: 'RapidFix Phone Repair — Expert Repairs & Same-Day Service' })
 
@@ -48,6 +48,39 @@ const popularTags = [
   'Warranty Included',
 ]
 const activeTag = ref<string | null>(null)
+
+type Service = {
+  id: number
+  category: string
+  tags: string[]
+  name: string
+  description: string
+  price: number
+  eta: string
+  warranty: string
+  image: string
+}
+const previewOpen = ref(false)
+const previewService = ref<Service | null>(null)
+
+function openServicePreview(svc: Service) {
+  previewService.value = svc
+  previewOpen.value = true
+}
+
+function closeServicePreview() {
+  previewOpen.value = false
+  previewService.value = null
+}
+
+const servicePreviewBadges = computed<PreviewBadge[]>(() => {
+  const s = previewService.value
+  if (!s) return []
+  return [
+    { label: s.eta, tone: 'slate' },
+    { label: `${s.warranty} warranty`, tone: 'emerald' },
+  ]
+})
 
 const services = [
   // ── iPhone ────────────────────────────────────────────────
@@ -793,8 +826,15 @@ function closeMobileFilters() {
             <article
               v-for="service in paginatedServices"
               :key="service.id"
-              class="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 xl:rounded-2xl"
+              class="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 xl:rounded-2xl"
             >
+              <button
+                type="button"
+                class="absolute inset-0 z-10 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40 xl:rounded-2xl"
+                :aria-label="`Preview ${service.name}`"
+                @click="openServicePreview(service)"
+              />
+
               <!-- Image with overlaid category badge -->
               <div class="relative overflow-hidden">
                 <img
@@ -835,7 +875,7 @@ function closeMobileFilters() {
                   </p>
                   <NuxtLink
                     :to="{ path: '/book', query: bookingQueryForService(service) }"
-                    class="inline-flex w-full items-center justify-center gap-1 rounded-full bg-rose-600 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-rose-500 active:scale-95 sm:gap-1.5 sm:text-xs xl:w-auto xl:shrink-0 xl:px-3.5"
+                    class="relative z-20 inline-flex w-full items-center justify-center gap-1 rounded-full bg-rose-600 px-2 py-1.5 text-[10px] font-bold text-white transition hover:bg-rose-500 active:scale-95 sm:w-auto sm:gap-1.5 sm:text-xs xl:shrink-0 xl:px-3.5"
                   >
                     <BadgeCheck class="h-3 w-3 shrink-0 xl:h-3.5 xl:w-3.5" />
                     <span>Book</span><span class="hidden sm:inline"> Now</span>
@@ -894,29 +934,32 @@ function closeMobileFilters() {
       </div>
     </section>
 
-    <!-- CTA banner -->
-    <section class="bg-slate-900 px-4 py-12 text-white sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-3xl text-center">
-        <CheckCircle2 class="mx-auto h-10 w-10 text-emerald-400" />
-        <h2 class="mt-4 text-2xl font-bold">Not Sure Which Service You Need?</h2>
-        <p class="mt-2 text-sm text-slate-300">
-          Book a free diagnosis visit. Our technicians will assess your device and recommend the right repair with no obligation.
-        </p>
-        <div class="mt-6 flex flex-wrap justify-center gap-3">
-          <NuxtLink
-            to="/book"
-            class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
-          >
-            Book Free Diagnosis
-          </NuxtLink>
-          <NuxtLink
-            to="/contact"
-            class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            Contact Us
-          </NuxtLink>
-        </div>
-      </div>
-    </section>
+    <PreviewModal
+      :open="previewOpen"
+      :title="previewService?.name ?? ''"
+      :subtitle="previewService ? `${previewService.category} · Service` : undefined"
+      :image="previewService?.image"
+      :price-text="previewService ? `Starting at ${formatPrice(previewService.price)}` : undefined"
+      :badges="servicePreviewBadges"
+      :description="previewService?.description"
+      :bullets="previewService?.tags"
+      :specs="
+        previewService
+          ? {
+              'Estimated time': previewService.eta,
+              Warranty: previewService.warranty,
+            }
+          : undefined
+      "
+      :primary-cta="
+        previewService
+          ? {
+              label: 'Book now',
+              to: { path: '/book', query: bookingQueryForService(previewService as any) },
+            }
+          : undefined
+      "
+      @close="closeServicePreview"
+    />
   </div>
 </template>

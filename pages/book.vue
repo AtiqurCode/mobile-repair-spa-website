@@ -91,7 +91,10 @@ function applyBookingQuery() {
     form.service = serviceRaw
   }
   if (detailRaw) {
-    form.notes = `Requested service (from listing): ${detailRaw}\n`
+    const isAccessory = /^accessory\s*:/i.test(detailRaw)
+    form.notes = isAccessory
+      ? `${detailRaw}\n`
+      : `Requested service (from listing): ${detailRaw}\n`
   }
 }
 
