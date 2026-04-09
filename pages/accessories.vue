@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, ChevronDown, Headphones, Search, SlidersHorizontal, Sparkles, X } from 'lucide-vue-next'
+import { Check, ChevronLeft, ChevronRight, ChevronDown, Headphones, Search, SlidersHorizontal, Sparkles, X } from 'lucide-vue-next'
 import {
   accessoryBrandList,
   accessoryDeviceCatalog,
@@ -25,6 +25,21 @@ const expandedLineId = ref<string>('')
 const openBrandId = ref<string>('')
 const previewOpen = ref(false)
 const previewAccessory = ref<(typeof accessories)[number] | null>(null)
+const selectedAccessoryUuids = ref<string[]>([])
+
+function isSelected(uuid: string) {
+  return selectedAccessoryUuids.value.includes(uuid)
+}
+
+function toggleSelected(uuid: string) {
+  const idx = selectedAccessoryUuids.value.indexOf(uuid)
+  if (idx >= 0) selectedAccessoryUuids.value.splice(idx, 1)
+  else selectedAccessoryUuids.value.push(uuid)
+}
+
+function clearSelected() {
+  selectedAccessoryUuids.value = []
+}
 
 function closeMobileFilters() {
   mobileFiltersOpen.value = false
@@ -126,6 +141,30 @@ watch([brandFilter, lineFilter, versionFilter, categoryFilters, searchQuery], ()
 })
 
 const fromServiceLabel = computed(() => firstStr(route.query.fromService))
+const serviceBookingFromRoute = computed(() => {
+  const brand = firstStr(route.query.svcBrand)
+  const service = firstStr(route.query.svcService)
+  const detail = firstStr(route.query.svcDetail)
+  return { brand, service, detail }
+})
+
+const selectedAccessories = computed(() => {
+  const map = new Map(accessories.map((a) => [a.uuid, a] as const))
+  return selectedAccessoryUuids.value
+    .map((uuid) => map.get(uuid))
+    .filter(Boolean) as (typeof accessories)[number][]
+})
+
+const bookingTo = computed(() => {
+  const { brand, service, detail } = serviceBookingFromRoute.value
+  const uuids = selectedAccessories.value.map((a) => a.uuid)
+  const q: Record<string, string> = {}
+  if (brand) q.brand = brand
+  if (service) q.service = service
+  if (detail) q.detail = detail
+  if (uuids.length) q.acc = uuids.join(',')
+  return { path: '/book', query: q }
+})
 
 const filteredList = computed(() => {
   const b = brandFilter.value === 'all' ? '' : brandFilter.value
@@ -292,6 +331,25 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
       <span class="font-semibold">{{ fromServiceLabel }}</span>
       — adjust filters below to explore more.
     </div>
+
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0 -translate-y-2"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 -translate-y-2"
+    >
+      <div
+        v-if="serviceBookingFromRoute.brand || serviceBookingFromRoute.service"
+        class="border-b border-slate-200 bg-white/90 px-4 py-2 text-center text-xs text-slate-600 backdrop-blur dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300 sm:px-6"
+      >
+        Will add to booking:
+        <span v-if="serviceBookingFromRoute.brand" class="font-semibold text-slate-900 dark:text-white">{{ serviceBookingFromRoute.brand }}</span>
+        <span v-if="serviceBookingFromRoute.brand && serviceBookingFromRoute.service"> · </span>
+        <span v-if="serviceBookingFromRoute.service" class="font-semibold text-slate-900 dark:text-white">{{ serviceBookingFromRoute.service }}</span>
+      </div>
+    </Transition>
 
     <!-- Mobile: search + filter toggle -->
     <div class="sticky top-14 z-30 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
@@ -680,6 +738,22 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
                 @click="openAccessoryPreview(item)"
               />
 
+              <button
+                type="button"
+                class="absolute right-2 top-2 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition active:scale-95"
+                :class="
+                  isSelected(item.uuid)
+                    ? 'border-rose-600 bg-rose-600 text-white'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900'
+                "
+                :aria-pressed="isSelected(item.uuid)"
+                :aria-label="isSelected(item.uuid) ? `Remove ${item.name}` : `Select ${item.name}`"
+                @click.stop="toggleSelected(item.uuid)"
+              >
+                <Check v-if="isSelected(item.uuid)" class="h-4 w-4" />
+                <span v-else class="text-[11px] font-extrabold leading-none">+</span>
+              </button>
+
               <div class="relative aspect-[4/3] overflow-hidden">
                 <img
                   :src="item.image"
@@ -704,7 +778,7 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
                   {{ formatAccessoryPrice(item.price) }}
                 </p>
                 <NuxtLink
-                  :to="{ path: '/book', query: { detail: `Accessory: ${item.name}` } }"
+                  :to="{ path: '/book', query: { detail: `Accessory: ${item.name}`, acc: item.uuid } }"
                   class="relative z-20 mt-auto inline-flex w-full items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800 transition hover:bg-rose-100 active:scale-95 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200 sm:w-auto"
                 >
                   Buy Now
@@ -778,4 +852,44 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
       @close="closeAccessoryPreview"
     />
   </div>
+
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-250 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      enter-from-class="opacity-0 translate-y-4"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-4"
+    >
+      <div
+        v-if="selectedAccessoryUuids.length"
+        class="fixed inset-x-0 bottom-0 z-[70] border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:bottom-4 lg:inset-x-auto lg:left-1/2 lg:w-[min(680px,calc(100vw-2rem))] lg:-translate-x-1/2 lg:rounded-2xl lg:border lg:shadow-lg"
+      >
+        <div class="mx-auto flex max-w-7xl items-center gap-3">
+          <p class="min-w-0 flex-1 text-sm font-semibold text-slate-900 dark:text-white">
+            {{ selectedAccessoryUuids.length }} selected
+            <span v-if="selectedAccessoryUuids.length <= 3" class="text-slate-500 dark:text-slate-400">
+              — {{ selectedAccessories.map((a) => a.name).join(', ') }}
+            </span>
+          </p>
+
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            @click="clearSelected"
+          >
+            Clear
+          </button>
+
+          <NuxtLink
+            :to="bookingTo"
+            class="inline-flex items-center justify-center rounded-full bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-500 active:scale-95"
+          >
+            Add to booking
+          </NuxtLink>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>

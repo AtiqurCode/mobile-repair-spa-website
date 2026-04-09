@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { CalendarCheck2, CheckCircle2, ClipboardCopy, Phone } from 'lucide-vue-next'
+import { CalendarCheck2, CheckCircle2, ClipboardCopy, Phone, Search, X } from 'lucide-vue-next'
+import { accessories, accessoryDeviceCatalog, formatAccessoryPrice, type AccessoryBrand } from '~/composables/useAccessories'
 
 useHead({ title: 'Book an Appointment — RapidFix Phone Repair' })
 
@@ -29,6 +30,119 @@ const timeSlots = [
 ]
 
 const route = useRoute()
+const router = useRouter()
+
+const selectedAccessoryUuids = ref<string[]>([])
+
+const accessoryPickerOpen = ref(false)
+const accessorySearch = ref('')
+const accessoryBrandFilter = ref<'all' | AccessoryBrand>('all')
+const accessoryCategoryFilter = ref<'all' | string>('all')
+
+function closeAccessoryPicker() {
+  accessoryPickerOpen.value = false
+}
+
+function onAccessoryPickerEscape(e: KeyboardEvent) {
+  if (e.key === 'Escape') closeAccessoryPicker()
+}
+
+watch(accessoryPickerOpen, (open) => {
+  if (!import.meta.client) return
+  document.documentElement.style.overflow = open ? 'hidden' : ''
+  if (open) window.addEventListener('keydown', onAccessoryPickerEscape)
+  else window.removeEventListener('keydown', onAccessoryPickerEscape)
+})
+
+onUnmounted(() => {
+  if (!import.meta.client) return
+  document.documentElement.style.overflow = ''
+  window.removeEventListener('keydown', onAccessoryPickerEscape)
+})
+
+const accessoryCategories = computed(() => {
+  const s = new Set<string>()
+  for (const a of accessories) s.add(a.category)
+  return [...s].sort()
+})
+
+const brandThumb = computed<Record<string, string>>(() => {
+  const out: Record<string, string> = {}
+  for (const a of accessories) {
+    if (!out[a.brand]) out[a.brand] = a.image
+  }
+  return out
+})
+
+const filteredAccessoryPickerList = computed(() => {
+  const q = accessorySearch.value.toLowerCase().trim()
+  return accessories.filter((a) => {
+    if (accessoryBrandFilter.value !== 'all' && a.brand !== accessoryBrandFilter.value) return false
+    if (accessoryCategoryFilter.value !== 'all' && a.category !== accessoryCategoryFilter.value) return false
+    if (!q) return true
+    return (
+      a.name.toLowerCase().includes(q) ||
+      a.brand.toLowerCase().includes(q) ||
+      a.category.toLowerCase().includes(q) ||
+      a.blurb.toLowerCase().includes(q)
+    )
+  })
+})
+
+function uniqueStrings(arr: string[]) {
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const s of arr) {
+    const v = s.trim()
+    if (!v || seen.has(v)) continue
+    seen.add(v)
+    out.push(v)
+  }
+  return out
+}
+
+function parseCsv(val: string) {
+  return uniqueStrings(
+    val
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean),
+  )
+}
+
+function lineLabel(lineId: string): string {
+  const lines = Object.values(accessoryDeviceCatalog).flat()
+  return lines.find((l) => l.id === lineId)?.label ?? lineId
+}
+
+function versionLabel(lineId: string, versionId: string): string {
+  const lines = Object.values(accessoryDeviceCatalog).flat()
+  const line = lines.find((l) => l.id === lineId)
+  const v = line?.versions.find((x) => x.id === versionId)
+  return v?.label ?? versionId
+}
+
+function accessoryFitsLabel(a: (typeof accessories)[number]) {
+  if (a.versionId === 'all') return 'All models'
+  if (a.versionId === 'all-line') return lineLabel(a.deviceLineId)
+  return versionLabel(a.deviceLineId, a.versionId)
+}
+
+const selectedAccessories = computed(() => {
+  const map = new Map(accessories.map((a) => [a.uuid, a] as const))
+  return selectedAccessoryUuids.value
+    .map((uuid) => map.get(uuid))
+    .filter(Boolean) as (typeof accessories)[number][]
+})
+
+function syncAccQuery(next: string[]) {
+  const uuids = uniqueStrings(next)
+  selectedAccessoryUuids.value = uuids
+  const query = { ...(route.query as Record<string, any>) }
+  if (uuids.length) query.acc = uuids.join(',')
+  else delete query.acc
+  router.replace({ path: '/book', query })
+}
 
 const form = reactive({
   name: '',
@@ -83,6 +197,7 @@ function applyBookingQuery() {
   const brandRaw = firstQueryString(q.brand)
   const serviceRaw = firstQueryString(q.service)
   const detailRaw = safeDecode(firstQueryString(q.detail)).trim()
+  const accRaw = safeDecode(firstQueryString(q.acc)).trim()
 
   if (brandRaw && deviceBrands.includes(brandRaw)) {
     form.deviceBrand = brandRaw
@@ -90,11 +205,21 @@ function applyBookingQuery() {
   if (serviceRaw && services.includes(serviceRaw)) {
     form.service = serviceRaw
   }
+
+  const noteLines: string[] = []
   if (detailRaw) {
     const isAccessory = /^accessory\s*:/i.test(detailRaw)
-    form.notes = isAccessory
-      ? `${detailRaw}\n`
-      : `Requested service (from listing): ${detailRaw}\n`
+    noteLines.push(isAccessory ? detailRaw : `Requested service (from listing): ${detailRaw}`)
+  }
+  if (accRaw) {
+    selectedAccessoryUuids.value = parseCsv(accRaw)
+    const picked = selectedAccessories.value
+    if (picked.length) noteLines.push(`Accessories (selected): ${picked.map((a) => a.name).join(', ')}`)
+  } else {
+    selectedAccessoryUuids.value = []
+  }
+  if (noteLines.length) {
+    form.notes = `${noteLines.join('\n')}\n`
   }
 }
 
@@ -299,6 +424,65 @@ function bookAnother() {
               </select>
             </div>
 
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-bold text-slate-900 dark:text-white">Accessories</p>
+                  <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    Select any accessories you want with your repair.
+                  </p>
+                </div>
+                <span
+                  v-if="selectedAccessoryUuids.length"
+                  class="inline-flex shrink-0 items-center rounded-full bg-rose-600 px-2 py-0.5 text-[11px] font-bold text-white"
+                >
+                  {{ selectedAccessoryUuids.length }} selected
+                </span>
+              </div>
+
+              <div v-if="selectedAccessories.length" class="mt-3 space-y-2">
+                <div
+                  v-for="a in selectedAccessories"
+                  :key="a.uuid"
+                  class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950"
+                >
+                  <img :src="a.image" :alt="a.name" class="h-12 w-12 rounded-lg object-cover" />
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ a.name }}</p>
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {{ a.brand }} · {{ a.category }} · {{ accessoryFitsLabel(a) }} · {{ formatAccessoryPrice(a.price) }}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                    aria-label="Remove accessory"
+                    @click="syncAccQuery(selectedAccessoryUuids.filter((u) => u !== a.uuid))"
+                  >
+                    <X class="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+                  @click="accessoryPickerOpen = true"
+                >
+                  Add / change accessories
+                </button>
+                <button
+                  v-if="selectedAccessoryUuids.length"
+                  type="button"
+                  class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+                  @click="syncAccQuery([])"
+                >
+                  Clear accessories
+                </button>
+              </div>
+            </div>
+
             <div class="grid gap-4 sm:grid-cols-2">
               <div>
                 <label for="b-date" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">Preferred date</label>
@@ -396,5 +580,203 @@ function bookAnother() {
         </div>
       </div>
     </section>
+
+    <!-- Accessory picker modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="accessoryPickerOpen" class="fixed inset-0 z-[80]" role="presentation">
+          <div
+            class="absolute inset-0 bg-slate-900/50 backdrop-blur-[3px]"
+            aria-hidden="true"
+            @click="closeAccessoryPicker"
+          />
+
+          <div
+            class="absolute inset-x-0 bottom-0 flex max-h-[min(90dvh,760px)] flex-col rounded-t-[1.25rem] bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700 sm:bottom-8 sm:left-1/2 sm:w-[min(960px,calc(100vw-3rem))] sm:-translate-x-1/2 sm:rounded-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="accessory-picker-title"
+          >
+          <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+            <div>
+              <h2 id="accessory-picker-title" class="text-lg font-bold text-slate-900 dark:text-white">
+                Add accessories
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                {{ filteredAccessoryPickerList.length }} item{{ filteredAccessoryPickerList.length !== 1 ? 's' : '' }}
+              </p>
+            </div>
+            <button
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              aria-label="Close accessories"
+              @click="closeAccessoryPicker"
+            >
+              <X class="h-5 w-5" />
+            </button>
+          </div>
+
+          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+            <div class="relative">
+              <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                v-model="accessorySearch"
+                type="text"
+                placeholder="Search accessories…"
+                class="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+
+            <!-- Brand filter with images -->
+            <div class="mt-4">
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Brand</p>
+              <div class="mt-2 flex gap-2 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  class="flex min-w-[6.5rem] items-center gap-2 rounded-xl border bg-white px-2.5 py-2 text-left transition active:scale-[0.99] dark:bg-slate-950"
+                  :class="
+                    accessoryBrandFilter === 'all'
+                      ? 'border-rose-500 ring-1 ring-rose-500/20'
+                      : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-900'
+                  "
+                  @click="accessoryBrandFilter = 'all'"
+                >
+                  <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-xs font-extrabold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    All
+                  </div>
+                  <div class="min-w-0">
+                    <p class="truncate text-xs font-bold text-slate-900 dark:text-white">All</p>
+                    <p class="truncate text-[11px] text-slate-500 dark:text-slate-400">Any brand</p>
+                  </div>
+                </button>
+
+                <button
+                  v-for="b in (['Apple','Samsung','Google','Universal'] as const)"
+                  :key="b"
+                  type="button"
+                  class="flex min-w-[7.5rem] items-center gap-2 rounded-xl border bg-white px-2.5 py-2 text-left transition active:scale-[0.99] dark:bg-slate-950"
+                  :class="
+                    accessoryBrandFilter === b
+                      ? 'border-rose-500 ring-1 ring-rose-500/20'
+                      : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-900'
+                  "
+                  @click="accessoryBrandFilter = b"
+                >
+                  <div class="h-10 w-10 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                    <img v-if="brandThumb[b]" :src="brandThumb[b]" :alt="b" class="h-full w-full object-cover" />
+                  </div>
+                  <div class="min-w-0">
+                    <p class="truncate text-xs font-bold text-slate-900 dark:text-white">{{ b }}</p>
+                    <p class="truncate text-[11px] text-slate-500 dark:text-slate-400">Filter</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Category filter -->
+            <div class="mt-4">
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Category</p>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  class="rounded-full border px-3 py-1.5 text-xs font-semibold transition"
+                  :class="
+                    accessoryCategoryFilter === 'all'
+                      ? 'border-rose-500 bg-rose-600 text-white'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900'
+                  "
+                  @click="accessoryCategoryFilter = 'all'"
+                >
+                  All
+                </button>
+                <button
+                  v-for="c in accessoryCategories"
+                  :key="c"
+                  type="button"
+                  class="rounded-full border px-3 py-1.5 text-xs font-semibold transition"
+                  :class="
+                    accessoryCategoryFilter === c
+                      ? 'border-rose-500 bg-rose-600 text-white'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900'
+                  "
+                  @click="accessoryCategoryFilter = c"
+                >
+                  {{ c }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Results -->
+            <div v-if="filteredAccessoryPickerList.length === 0" class="mt-6 rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-300">
+              No accessories match these filters.
+            </div>
+
+            <div v-else class="mt-5 grid gap-3 sm:grid-cols-2">
+              <div
+                v-for="a in filteredAccessoryPickerList"
+                :key="a.uuid"
+                class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+              >
+                <img :src="a.image" :alt="a.name" class="h-14 w-14 rounded-xl object-cover" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ a.name }}</p>
+                  <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    {{ a.brand }} · {{ a.category }} · {{ accessoryFitsLabel(a) }}
+                  </p>
+                  <p class="mt-1 text-sm font-bold text-slate-900 dark:text-white">{{ formatAccessoryPrice(a.price) }}</p>
+                </div>
+
+                <button
+                  type="button"
+                  class="shrink-0 rounded-full px-3 py-2 text-xs font-bold transition active:scale-95"
+                  :class="
+                    selectedAccessoryUuids.includes(a.uuid)
+                      ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                      : 'bg-rose-600 text-white hover:bg-rose-500'
+                  "
+                  @click="
+                    selectedAccessoryUuids.includes(a.uuid)
+                      ? syncAccQuery(selectedAccessoryUuids.filter((u) => u !== a.uuid))
+                      : syncAccQuery([...selectedAccessoryUuids, a.uuid])
+                  "
+                >
+                  {{ selectedAccessoryUuids.includes(a.uuid) ? 'Remove' : 'Add' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              {{ selectedAccessoryUuids.length }} selected
+            </p>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                @click="syncAccQuery([])"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                class="rounded-full bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-500 active:scale-95"
+                @click="closeAccessoryPicker"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

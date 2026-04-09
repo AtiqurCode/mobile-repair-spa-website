@@ -2,6 +2,7 @@
 import { CalendarCheck2, Menu, Moon, PhoneCall, Smartphone, Sun, X } from 'lucide-vue-next'
 
 const colorMode = useColorMode()
+const route = useRoute()
 const mobileMenuOpen = ref(false)
 
 const toggleTheme = () => {
@@ -14,6 +15,12 @@ const navLinks = [
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ]
+
+function isNavLinkActive(to: string) {
+  const path = route.path
+  if (to === '/') return path === '/'
+  return path === to || path.startsWith(`${to}/`)
+}
 </script>
 
 <template>
@@ -38,7 +45,13 @@ const navLinks = [
             v-for="link in navLinks"
             :key="link.to"
             :to="link.to"
-            class="rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            :aria-current="isNavLinkActive(link.to) ? 'page' : undefined"
+            class="rounded-full px-3 py-2 text-sm font-medium transition"
+            :class="
+              isNavLinkActive(link.to)
+                ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/25'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+            "
           >
             {{ link.label }}
           </NuxtLink>
@@ -88,7 +101,13 @@ const navLinks = [
             v-for="link in navLinks"
             :key="link.to"
             :to="link.to"
-            class="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            :aria-current="isNavLinkActive(link.to) ? 'page' : undefined"
+            class="rounded-xl px-4 py-2.5 text-sm font-medium transition"
+            :class="
+              isNavLinkActive(link.to)
+                ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/25'
+                : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
+            "
             @click="mobileMenuOpen = false"
           >
             {{ link.label }}

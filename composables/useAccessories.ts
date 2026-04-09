@@ -121,6 +121,7 @@ export const accessoryBrandList: AccessoryBrand[] = ['Apple', 'Samsung', 'Google
 
 export type Accessory = {
   id: number
+  uuid: string
   name: string
   brand: AccessoryBrand
   deviceLineId: string
@@ -136,6 +137,7 @@ export const accessories: Accessory[] = [
   // Apple — iPhone 15
   {
     id: 1,
+    uuid: 'acc-0001',
     name: 'Ceramic Shield Glass — iPhone 15 Pro',
     brand: 'Apple',
     deviceLineId: 'iphone-15',
@@ -147,6 +149,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 2,
+    uuid: 'acc-0002',
     name: 'MagSafe Silicone Case — iPhone 15 series',
     brand: 'Apple',
     deviceLineId: 'iphone-15',
@@ -158,6 +161,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 3,
+    uuid: 'acc-0003',
     name: 'USB-C Fast Charge Cable (1m)',
     brand: 'Apple',
     deviceLineId: 'iphone-15',
@@ -169,6 +173,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 4,
+    uuid: 'acc-0004',
     name: 'Privacy Glass — iPhone 15 Pro Max',
     brand: 'Apple',
     deviceLineId: 'iphone-15',
@@ -181,6 +186,7 @@ export const accessories: Accessory[] = [
   // Apple — iPhone 16
   {
     id: 5,
+    uuid: 'acc-0005',
     name: 'Clear MagSafe Case — iPhone 16 Pro',
     brand: 'Apple',
     deviceLineId: 'iphone-16',
@@ -192,6 +198,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 6,
+    uuid: 'acc-0006',
     name: 'Camera Lens Protector Set — iPhone 16 series',
     brand: 'Apple',
     deviceLineId: 'iphone-16',
@@ -204,6 +211,7 @@ export const accessories: Accessory[] = [
   // Samsung
   {
     id: 7,
+    uuid: 'acc-0007',
     name: 'S24 Ultra S Pen (replacement)',
     brand: 'Samsung',
     deviceLineId: 'galaxy-s24',
@@ -215,6 +223,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 8,
+    uuid: 'acc-0008',
     name: 'Galaxy S24+ Armoured Case',
     brand: 'Samsung',
     deviceLineId: 'galaxy-s24',
@@ -226,6 +235,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 9,
+    uuid: 'acc-0009',
     name: '45W USB-C PD Wall Adapter',
     brand: 'Samsung',
     deviceLineId: 'galaxy-s24',
@@ -237,6 +247,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 10,
+    uuid: 'acc-0010',
     name: 'Galaxy A55 Wallet Case',
     brand: 'Samsung',
     deviceLineId: 'galaxy-a',
@@ -249,6 +260,7 @@ export const accessories: Accessory[] = [
   // Google
   {
     id: 11,
+    uuid: 'acc-0011',
     name: 'Pixel 9 Pro Fabric Case',
     brand: 'Google',
     deviceLineId: 'pixel-9',
@@ -260,6 +272,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 12,
+    uuid: 'acc-0012',
     name: 'Pixel 8 Screen Protector (2-pack)',
     brand: 'Google',
     deviceLineId: 'pixel-8',
@@ -271,6 +284,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 13,
+    uuid: 'acc-0013',
     name: '30W USB-C Charger — Pixel',
     brand: 'Google',
     deviceLineId: 'pixel-9',
@@ -283,6 +297,7 @@ export const accessories: Accessory[] = [
   // Universal
   {
     id: 14,
+    uuid: 'acc-0014',
     name: 'Universal 20W USB-C + Lightning Kit',
     brand: 'Universal',
     deviceLineId: 'all-phones',
@@ -294,6 +309,7 @@ export const accessories: Accessory[] = [
   },
   {
     id: 15,
+    uuid: 'acc-0015',
     name: 'Adjustable Desk Phone Stand',
     brand: 'Universal',
     deviceLineId: 'all-phones',
