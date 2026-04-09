@@ -1,18 +1,51 @@
 <script setup lang="ts">
-import { Clock3, Mail, MapPin, MessageSquare, Phone, Send } from 'lucide-vue-next'
+import { Clock3, Mail, MapPin, MessageSquare, Phone, Send, type Component } from 'lucide-vue-next'
 
 useHead({ title: 'Contact Us — RapidFix Phone Repair' })
 
-const form = reactive({
-  name: '',
-  email: '',
-  phone: '',
-  service: '',
-  message: '',
-})
+// ── Static data ──────────────────────────────────────────────────────────────
 
-const submitted = ref(false)
-const submitting = ref(false)
+type ContactItem = {
+  icon: Component
+  iconBg: string
+  iconColor: string
+  label: string
+  value: string
+  href?: string
+}
+
+const contactItems: ContactItem[] = [
+  {
+    icon: MapPin,
+    iconBg: 'bg-rose-100 dark:bg-rose-900/40',
+    iconColor: 'text-rose-600 dark:text-rose-400',
+    label: 'Address',
+    value: '120 Tech Avenue, Downtown, New York',
+  },
+  {
+    icon: Phone,
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900/40',
+    iconColor: 'text-emerald-600 dark:text-emerald-400',
+    label: 'Phone Number',
+    value: '+1 (555) 123-4567',
+    href: 'tel:+15551234567',
+  },
+  {
+    icon: Mail,
+    iconBg: 'bg-sky-100 dark:bg-sky-900/40',
+    iconColor: 'text-sky-600 dark:text-sky-400',
+    label: 'Email Address',
+    value: 'hello@rapidfix.com',
+    href: 'mailto:hello@rapidfix.com',
+  },
+  {
+    icon: Clock3,
+    iconBg: 'bg-amber-100 dark:bg-amber-900/40',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    label: 'Opening Hours',
+    value: 'Monday – Sunday: 9AM – 9PM',
+  },
+]
 
 const services = [
   'Screen Replacement',
@@ -26,10 +59,22 @@ const services = [
   'Other',
 ]
 
+// ── State ────────────────────────────────────────────────────────────────────
+
+const form = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  service: '',
+  message: '',
+})
+
+const submitted = ref(false)
+const submitting = ref(false)
+
 function handleSubmit() {
   if (!form.name || !form.email || !form.message) return
   submitting.value = true
-  // Simulate async form submission
   setTimeout(() => {
     submitting.value = false
     submitted.value = true
@@ -65,43 +110,22 @@ function handleSubmit() {
           </div>
 
           <div class="space-y-4">
-            <div class="flex items-start gap-4">
-              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40">
-                <MapPin class="h-5 w-5" />
+            <div
+              v-for="item in contactItems"
+              :key="item.label"
+              class="flex items-start gap-4"
+            >
+              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" :class="item.iconBg">
+                <component :is="item.icon" class="h-5 w-5" :class="item.iconColor" />
               </span>
               <div>
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">Address</p>
-                <p class="text-sm text-slate-600 dark:text-slate-300">120 Tech Avenue, Downtown, New York</p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-4">
-              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40">
-                <Phone class="h-5 w-5" />
-              </span>
-              <div>
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">Phone Number</p>
-                <a href="tel:+15551234567" class="text-sm text-rose-600 hover:underline dark:text-rose-400">+1 (555) 123-4567</a>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-4">
-              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/40">
-                <Mail class="h-5 w-5" />
-              </span>
-              <div>
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">Email Address</p>
-                <a href="mailto:hello@rapidfix.com" class="text-sm text-rose-600 hover:underline dark:text-rose-400">hello@rapidfix.com</a>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-4">
-              <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/40">
-                <Clock3 class="h-5 w-5" />
-              </span>
-              <div>
-                <p class="text-sm font-semibold text-slate-900 dark:text-white">Opening Hours</p>
-                <p class="text-sm text-slate-600 dark:text-slate-300">Monday – Sunday: 9AM – 9PM</p>
+                <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ item.label }}</p>
+                <a
+                  v-if="item.href"
+                  :href="item.href"
+                  class="text-sm text-rose-600 hover:underline dark:text-rose-400"
+                >{{ item.value }}</a>
+                <p v-else class="text-sm text-slate-600 dark:text-slate-300">{{ item.value }}</p>
               </div>
             </div>
           </div>

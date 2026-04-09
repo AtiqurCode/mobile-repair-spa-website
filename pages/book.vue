@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { CalendarCheck2, CheckCircle2, ClipboardCopy, Phone, Search, X } from 'lucide-vue-next'
-import { accessories, accessoryDeviceCatalog, formatAccessoryPrice, type AccessoryBrand } from '~/composables/useAccessories'
+import {
+  accessories,
+  accessoryFitsLabel,
+  formatAccessoryPrice,
+  type AccessoryBrand,
+} from '~/composables/useAccessories'
 
 useHead({ title: 'Book an Appointment — RapidFix Phone Repair' })
 
@@ -89,43 +94,8 @@ const filteredAccessoryPickerList = computed(() => {
   })
 })
 
-function uniqueStrings(arr: string[]) {
-  const out: string[] = []
-  const seen = new Set<string>()
-  for (const s of arr) {
-    const v = s.trim()
-    if (!v || seen.has(v)) continue
-    seen.add(v)
-    out.push(v)
-  }
-  return out
-}
-
-function parseCsv(val: string) {
-  return uniqueStrings(
-    val
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean),
-  )
-}
-
-function lineLabel(lineId: string): string {
-  const lines = Object.values(accessoryDeviceCatalog).flat()
-  return lines.find((l) => l.id === lineId)?.label ?? lineId
-}
-
-function versionLabel(lineId: string, versionId: string): string {
-  const lines = Object.values(accessoryDeviceCatalog).flat()
-  const line = lines.find((l) => l.id === lineId)
-  const v = line?.versions.find((x) => x.id === versionId)
-  return v?.label ?? versionId
-}
-
-function accessoryFitsLabel(a: (typeof accessories)[number]) {
-  if (a.versionId === 'all') return 'All models'
-  if (a.versionId === 'all-line') return lineLabel(a.deviceLineId)
-  return versionLabel(a.deviceLineId, a.versionId)
+function parseCsv(val: string): string[] {
+  return [...new Set(val.split(',').map((s) => s.trim()).filter(Boolean))]
 }
 
 const selectedAccessories = computed(() => {
@@ -136,7 +106,7 @@ const selectedAccessories = computed(() => {
 })
 
 function syncAccQuery(next: string[]) {
-  const uuids = uniqueStrings(next)
+  const uuids = [...new Set(next.map((s) => s.trim()).filter(Boolean))]
   selectedAccessoryUuids.value = uuids
   const query = { ...(route.query as Record<string, any>) }
   if (uuids.length) query.acc = uuids.join(',')
@@ -144,7 +114,21 @@ function syncAccQuery(next: string[]) {
   router.replace({ path: '/book', query })
 }
 
-const form = reactive({
+type BookingForm = {
+  name: string
+  phone: string
+  email: string
+  deviceBrand: string
+  deviceModel: string
+  service: string
+  preferredDate: string
+  preferredTime: string
+  notes: string
+}
+
+type BookingSnapshot = BookingForm & { reference: string }
+
+const EMPTY_FORM: BookingForm = {
   name: '',
   phone: '',
   email: '',
@@ -154,26 +138,17 @@ const form = reactive({
   preferredDate: '',
   preferredTime: '',
   notes: '',
-})
+}
+
+const form = reactive<BookingForm>({ ...EMPTY_FORM })
 
 const submitting = ref(false)
 const errorMessage = ref('')
 const submitted = ref(false)
 const reference = ref('')
 
-/** Snapshot after successful submit (form is cleared) — used for copy + display */
-const lastBooking = ref<{
-  reference: string
-  name: string
-  phone: string
-  email: string
-  service: string
-  deviceBrand: string
-  deviceModel: string
-  preferredDate: string
-  preferredTime: string
-  notes: string
-} | null>(null)
+/** Snapshot kept after submit so the success state can display/copy full details */
+const lastBooking = ref<BookingSnapshot | null>(null)
 
 const minDate = computed(() => new Date().toISOString().slice(0, 10))
 
@@ -298,17 +273,7 @@ async function handleSubmit() {
       notes: form.notes.trim(),
     }
     submitted.value = true
-    Object.assign(form, {
-      name: '',
-      phone: '',
-      email: '',
-      deviceBrand: '',
-      deviceModel: '',
-      service: '',
-      preferredDate: '',
-      preferredTime: '',
-      notes: '',
-    })
+    Object.assign(form, EMPTY_FORM)
   } catch (e: unknown) {
     const err = e as { data?: { statusMessage?: string }; message?: string }
     errorMessage.value = err.data?.statusMessage || err.message || 'Something went wrong. Please try again or call us.'

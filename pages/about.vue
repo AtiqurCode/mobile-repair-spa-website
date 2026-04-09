@@ -6,17 +6,86 @@ import {
   Globe2,
   Recycle,
   ShieldCheck,
+  type Component,
   Wrench,
-  Zap
+  Zap,
 } from 'lucide-vue-next'
 
 useHead({ title: 'About Us — RapidFix Phone Repair' })
 
+// ── Static data ──────────────────────────────────────────────────────────────
+
+const highlights = [
+  'Innovating Repair Solutions with OEM-grade parts',
+  'Transforming same-day service for walk-ins and bookings',
+  'Redefining the repair experience with transparency',
+  'Next-level quality assurance — 35-point inspection',
+]
+
+const stats = [
+  { value: '8+',  label: 'Services Offered' },
+  { value: '15k+', label: 'Satisfied Customers' },
+  { value: '15k+', label: 'Repairs Completed' },
+  { value: '8+',  label: 'Years of Experience' },
+]
+
+type FeatureCard = {
+  icon: Component
+  iconBg: string
+  iconColor: string
+  title: string
+  body: string
+}
+
+const features: FeatureCard[] = [
+  {
+    icon: ShieldCheck,
+    iconBg: 'bg-rose-100 dark:bg-rose-900/40',
+    iconColor: 'text-rose-600',
+    title: 'Certified Technicians',
+    body: 'All repairs are performed by fully trained, certified mobile device technicians.',
+  },
+  {
+    icon: BadgeCheck,
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900/40',
+    iconColor: 'text-emerald-600',
+    title: '12-Month Warranty',
+    body: 'Every repair comes with a comprehensive 12-month warranty on parts and labor.',
+  },
+  {
+    icon: Zap,
+    iconBg: 'bg-sky-100 dark:bg-sky-900/40',
+    iconColor: 'text-sky-600',
+    title: 'Same-Day Service',
+    body: 'Most repairs are completed the same day — often within 45–90 minutes.',
+  },
+  {
+    icon: DollarSign,
+    iconBg: 'bg-amber-100 dark:bg-amber-900/40',
+    iconColor: 'text-amber-600',
+    title: 'Transparent Pricing',
+    body: 'Know exactly what you pay. No hidden fees, no surprises at checkout.',
+  },
+  {
+    icon: Recycle,
+    iconBg: 'bg-teal-100 dark:bg-teal-900/40',
+    iconColor: 'text-teal-600',
+    title: 'Eco-Friendly Practices',
+    body: 'We responsibly recycle old parts and use eco-conscious repair methods.',
+  },
+  {
+    icon: Globe2,
+    iconBg: 'bg-violet-100 dark:bg-violet-900/40',
+    iconColor: 'text-violet-600',
+    title: '24/7 Support',
+    body: 'Round-the-clock phone and email support to address your urgent device issues.',
+  },
+]
+
 const faqs = [
   {
     question: 'How can I get started with RapidFix?',
-    answer: 'Getting started is easy! Book an appointment online or give us a call, and we\'ll guide you through every step of the repair process.',
-    open: true,
+    answer: "Getting started is easy! Book an appointment online or give us a call, and we'll guide you through every step of the repair process.",
   },
   {
     question: 'What kind of support does RapidFix offer?',
@@ -36,18 +105,13 @@ const faqs = [
   },
 ]
 
+// ── State ────────────────────────────────────────────────────────────────────
+
 const openFaq = ref<number | null>(0)
 
 function toggleFaq(index: number) {
   openFaq.value = openFaq.value === index ? null : index
 }
-
-const stats = [
-  { value: '8+', label: 'Services Offered (types)' },
-  { value: '15k+', label: 'Satisfied Customers' },
-  { value: '15k+', label: 'Repairs Completed' },
-  { value: '8+', label: 'Years of Experience' },
-]
 </script>
 
 <template>
@@ -76,21 +140,9 @@ const stats = [
           </p>
 
           <ul class="mt-6 space-y-3 text-sm text-slate-700 dark:text-slate-200">
-            <li class="flex items-center gap-2">
+            <li v-for="h in highlights" :key="h" class="flex items-center gap-2">
               <BadgeCheck class="h-4 w-4 shrink-0 text-emerald-600" />
-              Innovating Repair Solutions with OEM-grade parts
-            </li>
-            <li class="flex items-center gap-2">
-              <BadgeCheck class="h-4 w-4 shrink-0 text-emerald-600" />
-              Transforming same-day service for walk-ins and bookings
-            </li>
-            <li class="flex items-center gap-2">
-              <BadgeCheck class="h-4 w-4 shrink-0 text-emerald-600" />
-              Redefining the repair experience with transparency
-            </li>
-            <li class="flex items-center gap-2">
-              <BadgeCheck class="h-4 w-4 shrink-0 text-emerald-600" />
-              Next-level quality assurance — 35-point inspection
+              {{ h }}
             </li>
           </ul>
 
@@ -141,47 +193,16 @@ const stats = [
         <p class="text-center text-xs font-semibold uppercase tracking-widest text-rose-600 dark:text-rose-400">Why Choose Us</p>
         <h2 class="mt-2 text-center text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">The RapidFix Difference</h2>
         <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-900/40">
-              <ShieldCheck class="h-5 w-5 text-rose-600" />
+          <div
+            v-for="f in features"
+            :key="f.title"
+            class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+          >
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl" :class="f.iconBg">
+              <component :is="f.icon" class="h-5 w-5" :class="f.iconColor" />
             </span>
-            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Certified Technicians</h3>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">All repairs are performed by fully trained, certified mobile device technicians.</p>
-          </div>
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/40">
-              <BadgeCheck class="h-5 w-5 text-emerald-600" />
-            </span>
-            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">12-Month Warranty</h3>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Every repair comes with a comprehensive 12-month warranty on parts and labor.</p>
-          </div>
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-900/40">
-              <Zap class="h-5 w-5 text-sky-600" />
-            </span>
-            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Same-Day Service</h3>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Most repairs are completed the same day — often within 45–90 minutes.</p>
-          </div>
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
-              <DollarSign class="h-5 w-5 text-amber-600" />
-            </span>
-            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Transparent Pricing</h3>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Know exactly what you pay. No hidden fees, no surprises at checkout.</p>
-          </div>
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-900/40">
-              <Recycle class="h-5 w-5 text-teal-600" />
-            </span>
-            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Eco-Friendly Practices</h3>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">We responsibly recycle old parts and use eco-conscious repair methods.</p>
-          </div>
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40">
-              <Globe2 class="h-5 w-5 text-violet-600" />
-            </span>
-            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">24/7 Support</h3>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Round-the-clock phone and email support to address your urgent device issues.</p>
+            <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">{{ f.title }}</h3>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">{{ f.body }}</p>
           </div>
         </div>
       </div>

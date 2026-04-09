@@ -4,8 +4,11 @@ import {
   accessoryBrandList,
   accessoryDeviceCatalog,
   accessories,
+  accessoryFitsLabel,
   filterAccessories,
   formatAccessoryPrice,
+  lineLabel,
+  versionLabel,
   type AccessoryBrand,
 } from '~/composables/useAccessories'
 import PreviewModal, { type PreviewBadge } from '~/components/PreviewModal.vue'
@@ -270,23 +273,6 @@ function linesFor(br: string) {
   return accessoryDeviceCatalog[br as AccessoryBrand] ?? []
 }
 
-function versionLabel(lineId: string, versionId: string): string {
-  const lines = Object.values(accessoryDeviceCatalog).flat()
-  const line = lines.find((l) => l.id === lineId)
-  const v = line?.versions.find((x) => x.id === versionId)
-  return v?.label ?? versionId
-}
-
-function lineLabel(lineId: string): string {
-  const lines = Object.values(accessoryDeviceCatalog).flat()
-  return lines.find((l) => l.id === lineId)?.label ?? lineId
-}
-
-function accessoryFitsLabel(a: (typeof accessories)[number]) {
-  if (a.versionId === 'all') return 'All models'
-  if (a.versionId === 'all-line') return lineLabel(a.deviceLineId)
-  return versionLabel(a.deviceLineId, a.versionId)
-}
 
 function openAccessoryPreview(a: (typeof accessories)[number]) {
   previewAccessory.value = a

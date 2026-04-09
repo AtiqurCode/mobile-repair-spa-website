@@ -325,6 +325,23 @@ export function formatAccessoryPrice(n: number) {
   return `$${n.toFixed(0)}`
 }
 
+export function lineLabel(lineId: string): string {
+  const lines = Object.values(accessoryDeviceCatalog).flat()
+  return lines.find((l) => l.id === lineId)?.label ?? lineId
+}
+
+export function versionLabel(lineId: string, versionId: string): string {
+  const lines = Object.values(accessoryDeviceCatalog).flat()
+  const line = lines.find((l) => l.id === lineId)
+  return line?.versions.find((v) => v.id === versionId)?.label ?? versionId
+}
+
+export function accessoryFitsLabel(a: Accessory): string {
+  if (a.versionId === 'all') return 'All models'
+  if (a.versionId === 'all-line') return lineLabel(a.deviceLineId)
+  return versionLabel(a.deviceLineId, a.versionId)
+}
+
 export function filterAccessories(
   list: Accessory[],
   opts: { brand: string; line: string; version: string },
