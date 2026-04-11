@@ -181,17 +181,35 @@ function applyBookingQuery() {
     form.service = serviceRaw
   }
 
+  if (accRaw) {
+    selectedAccessoryUuids.value = parseCsv(accRaw)
+  } else {
+    selectedAccessoryUuids.value = []
+  }
+  const picked = selectedAccessories.value
+
+  const detailAccessoryName =
+    detailRaw && /^accessory\s*:/i.test(detailRaw)
+      ? detailRaw.replace(/^accessory\s*:\s*/i, '').trim()
+      : ''
+  /** `detail` is frozen from the first link; `acc` is updated in the picker — omit stale Accessory: line when that item is already in the selection. */
+  const omitAccessoryDetailLine =
+    Boolean(
+      accRaw &&
+        picked.length &&
+        detailAccessoryName &&
+        picked.some((a) => a.name.trim().toLowerCase() === detailAccessoryName.toLowerCase()),
+    )
+
   const noteLines: string[] = []
   if (detailRaw) {
     const isAccessory = /^accessory\s*:/i.test(detailRaw)
-    noteLines.push(isAccessory ? detailRaw : `Requested service (from listing): ${detailRaw}`)
+    if (!(isAccessory && omitAccessoryDetailLine)) {
+      noteLines.push(isAccessory ? detailRaw : `Requested service (from listing): ${detailRaw}`)
+    }
   }
-  if (accRaw) {
-    selectedAccessoryUuids.value = parseCsv(accRaw)
-    const picked = selectedAccessories.value
-    if (picked.length) noteLines.push(`Accessories (selected): ${picked.map((a) => a.name).join(', ')}`)
-  } else {
-    selectedAccessoryUuids.value = []
+  if (accRaw && picked.length) {
+    noteLines.push(`Accessories (selected): ${picked.map((a) => a.name.trim()).join(', ')}`)
   }
   if (noteLines.length) {
     form.notes = `${noteLines.join('\n')}\n`
