@@ -298,6 +298,32 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
   <div>
     <section class="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 px-4 py-12 text-white sm:px-6 lg:px-8">
       <div class="mx-auto max-w-7xl text-center">
+        <nav aria-label="Browse catalog" class="mb-8 flex justify-center">
+          <div class="inline-flex rounded-full border border-white/20 bg-white/5 p-1 shadow-sm backdrop-blur-sm">
+            <NuxtLink
+              to="/"
+              class="rounded-full px-5 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              :class="
+                route.path === '/' || route.name === 'index'
+                  ? 'bg-white text-slate-900 shadow'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+              "
+            >
+              Services
+            </NuxtLink>
+            <NuxtLink
+              to="/accessories"
+              class="rounded-full px-5 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              :class="
+                route.path.startsWith('/accessories')
+                  ? 'bg-white text-slate-900 shadow'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+              "
+            >
+              Accessories
+            </NuxtLink>
+          </div>
+        </nav>
         <p class="inline-flex items-center gap-2 rounded-full border border-rose-300/30 bg-rose-500/15 px-3 py-1 text-xs font-semibold tracking-wide text-rose-200">
           <Headphones class="h-3.5 w-3.5" /> Accessories
         </p>

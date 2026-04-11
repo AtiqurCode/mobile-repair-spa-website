@@ -12,6 +12,10 @@ import PreviewModal, { type PreviewBadge } from '~/components/PreviewModal.vue'
 
 useHead({ title: 'RapidFix Phone Repair — Expert Repairs & Same-Day Service' })
 
+const route = useRoute()
+const isServicesPage = computed(() => route.path === '/' || route.name === 'index')
+const isAccessoriesPage = computed(() => route.path.startsWith('/accessories'))
+
 const categories = serviceCategories
 const activeCategory = ref('All Categories')
 
@@ -142,6 +146,32 @@ function closeMobileFilters() {
     <!-- Page header -->
     <section class="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 px-4 py-14 text-white sm:px-6 lg:px-8">
       <div class="mx-auto max-w-7xl text-center">
+        <nav aria-label="Browse catalog" class="mb-8 flex justify-center">
+          <div class="inline-flex rounded-full border border-white/20 bg-white/5 p-1 shadow-sm backdrop-blur-sm">
+            <NuxtLink
+              to="/"
+              class="rounded-full px-5 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              :class="
+                isServicesPage
+                  ? 'bg-white text-slate-900 shadow'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+              "
+            >
+              Services
+            </NuxtLink>
+            <NuxtLink
+              to="/accessories"
+              class="rounded-full px-5 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              :class="
+                isAccessoriesPage
+                  ? 'bg-white text-slate-900 shadow'
+                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+              "
+            >
+              Accessories
+            </NuxtLink>
+          </div>
+        </nav>
         <p class="inline-flex items-center gap-2 rounded-full border border-rose-300/30 bg-rose-500/15 px-3 py-1 text-xs font-semibold tracking-wide text-rose-200">
           <Wrench class="h-3.5 w-3.5" /> Our Services
         </p>
@@ -149,20 +179,6 @@ function closeMobileFilters() {
         <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
           From cracked screens to battery swaps and water damage treatment — all repairs backed by certified technicians and a 12-month warranty.
         </p>
-        <div class="mt-6 flex flex-wrap justify-center gap-3">
-          <NuxtLink
-            to="/book"
-            class="inline-flex items-center justify-center rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
-          >
-            Book a Repair
-          </NuxtLink>
-          <a
-            href="tel:+15551234567"
-            class="inline-flex items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            Call Us Now
-          </a>
-        </div>
       </div>
     </section>
 
