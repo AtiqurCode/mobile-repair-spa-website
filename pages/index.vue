@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BadgeCheck, ChevronLeft, ChevronRight, Clock3, ShieldCheck, SlidersHorizontal, Tag, X } from 'lucide-vue-next'
+import { BadgeCheck, ChevronLeft, ChevronRight, Clock3, ShieldCheck, SlidersHorizontal, Tag, Wrench, X } from 'lucide-vue-next'
 import {
   bookingQueryForService,
   formatPrice,
@@ -173,7 +173,8 @@ function closeMobileFilters() {
           </div>
         </nav>
         <p class="inline-flex items-center gap-2 rounded-full border border-rose-300/30 bg-rose-500/15 px-3 py-1 text-xs font-semibold tracking-wide text-rose-200">
-          <Wrench class="h-3.5 w-3.5" /> Our Services
+            <Wrench class="h-3.5 w-3.5" stroke-width="2.25" />
+          Our Services
         </p>
         <h1 class="mt-4 text-3xl font-extrabold sm:text-4xl">Expert Phone Repair Services</h1>
         <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
@@ -184,7 +185,7 @@ function closeMobileFilters() {
 
     <!-- ── Mobile: category strip + filter sheet trigger (hidden lg+) ── -->
     <div
-      class="sticky top-14 z-30 border-b border-slate-200/90 bg-white/95 shadow-sm backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 lg:hidden"
+      class="sticky top-14 z-30 border-b border-slate-200/90 bg-white/95 shadow-sm backdrop-blur-md transition-[box-shadow,border-color,background-color] duration-300 ease-out dark:border-slate-800 dark:bg-slate-950/95 lg:hidden"
     >
       <div class="flex items-stretch gap-2 px-3 py-2.5 sm:px-4">
         <div class="relative min-w-0 flex-1">
@@ -203,10 +204,10 @@ function closeMobileFilters() {
               v-for="cat in categories"
               :key="cat"
               type="button"
-              class="snap-start scroll-ml-0 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98]"
+              class="snap-start scroll-ml-0 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-semibold transition-[color,background-color,box-shadow,ring-color] duration-300 ease-in-out motion-reduce:transition-none"
               :class="
                 activeCategory === cat
-                  ? 'bg-rose-600 text-white shadow-md shadow-rose-600/25'
+                  ? 'bg-rose-600 text-white shadow-md shadow-rose-600/25 ring-2 ring-rose-500/30'
                   : 'bg-slate-100 text-slate-800 ring-1 ring-slate-200/80 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700'
               "
               @click="activeCategory = cat"
@@ -217,10 +218,10 @@ function closeMobileFilters() {
         </div>
         <button
           type="button"
-          class="relative inline-flex min-h-[44px] min-w-[44px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl border px-3 text-[11px] font-bold uppercase tracking-wide transition active:scale-[0.98]"
+          class="relative inline-flex min-h-[44px] min-w-[44px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl border px-3 text-[11px] font-bold uppercase tracking-wide transition-[color,background-color,border-color,transform,box-shadow] duration-200 ease-out active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100"
           :class="
             mobileFiltersOpen || activeFilterCount > 0
-              ? 'border-rose-500 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-950/50 dark:text-rose-300'
+              ? 'border-rose-500 bg-rose-50 text-rose-700 shadow-sm shadow-rose-500/10 dark:border-rose-500 dark:bg-rose-950/50 dark:text-rose-300'
               : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
           "
           aria-haspopup="dialog"
@@ -245,33 +246,33 @@ function closeMobileFilters() {
         role="presentation"
       >
         <div
-          class="absolute inset-0 bg-slate-900/50 backdrop-blur-[3px] transition-opacity duration-300"
-          :class="mobileFiltersOpen ? 'opacity-100' : 'opacity-0'"
+          class="absolute inset-0 bg-slate-900/55 backdrop-blur-[6px] transition-[opacity,backdrop-filter] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-opacity motion-reduce:duration-200"
+          :class="mobileFiltersOpen ? 'opacity-100' : 'pointer-events-none opacity-0'"
           aria-hidden="true"
           @click="closeMobileFilters"
         />
         <div
-          class="absolute inset-x-0 bottom-0 flex max-h-[min(88dvh,640px)] flex-col rounded-t-[1.25rem] bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] ring-1 ring-slate-200/80 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-slate-900 dark:ring-slate-700"
-          :class="mobileFiltersOpen ? 'translate-y-0' : 'translate-y-full'"
+          class="absolute inset-x-0 bottom-0 flex max-h-[min(88dvh,640px)] flex-col rounded-t-[1.35rem] bg-white shadow-[0_-12px_48px_rgba(0,0,0,0.14)] ring-1 ring-slate-200/80 transition-[transform,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-transform motion-reduce:duration-200 dark:bg-slate-900 dark:ring-slate-700"
+          :class="mobileFiltersOpen ? 'translate-y-0' : 'pointer-events-none translate-y-full'"
           role="dialog"
           aria-modal="true"
           aria-labelledby="mobile-filters-title"
         >
           <div class="flex shrink-0 flex-col items-center pt-2 pb-1">
-            <div class="h-1 w-12 rounded-full bg-slate-300 dark:bg-slate-600" aria-hidden="true" />
+            <div class="h-1 w-12 rounded-full bg-slate-300 transition-colors duration-200 dark:bg-slate-600" aria-hidden="true" />
           </div>
           <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 pb-3 pt-1 dark:border-slate-800">
             <div>
               <h2 id="mobile-filters-title" class="text-lg font-bold text-slate-900 dark:text-white">
                 Sort &amp; refine
               </h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">
+              <p class="text-xs text-slate-500 transition-opacity duration-200 dark:text-slate-400">
                 {{ filteredServices.length }} service{{ filteredServices.length !== 1 ? 's' : '' }} match
               </p>
             </div>
             <button
               type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-[background-color,transform] duration-200 ease-out hover:scale-105 hover:bg-slate-200 active:scale-95 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
               aria-label="Close filters"
               @click="closeMobileFilters"
             >
@@ -279,7 +280,7 @@ function closeMobileFilters() {
             </button>
           </div>
 
-          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth px-4 py-4">
             <p class="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Phone brand</p>
             <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">Choose a brand or show all services.</p>
             <div class="flex flex-wrap gap-2">
@@ -287,10 +288,10 @@ function closeMobileFilters() {
                 v-for="cat in categories"
                 :key="cat"
                 type="button"
-                class="rounded-full border px-3.5 py-2.5 text-sm font-semibold transition active:scale-[0.98]"
+                class="rounded-full border px-3.5 py-2.5 text-sm font-semibold transition-[color,background-color,border-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
                 :class="
                   activeCategory === cat
-                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20'
+                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20 ring-2 ring-rose-500/25'
                     : 'border-slate-200 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
                 "
                 @click="activeCategory = cat"
@@ -305,10 +306,10 @@ function closeMobileFilters() {
                 v-for="opt in sortOptions"
                 :key="opt.value"
                 type="button"
-                class="rounded-full border px-3.5 py-2.5 text-sm font-semibold transition active:scale-[0.98]"
+                class="rounded-full border px-3.5 py-2.5 text-sm font-semibold transition-[color,background-color,border-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
                 :class="
                   activeSort === opt.value
-                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20'
+                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20 ring-2 ring-rose-500/25'
                     : 'border-slate-200 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
                 "
                 @click="activeSort = opt.value"
@@ -324,10 +325,10 @@ function closeMobileFilters() {
                 v-for="tag in popularTags"
                 :key="tag"
                 type="button"
-                class="rounded-full border px-3.5 py-2 text-sm font-medium transition active:scale-[0.98]"
+                class="rounded-full border px-3.5 py-2 text-sm font-medium transition-[color,background-color,border-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
                 :class="
                   activeTag === tag
-                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20'
+                    ? 'border-rose-500 bg-rose-600 text-white shadow-md shadow-rose-600/20 ring-2 ring-rose-500/25'
                     : 'border-slate-200 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
                 "
                 @click="toggleTag(tag)"
@@ -345,14 +346,14 @@ function closeMobileFilters() {
               <button
                 v-if="activeFilterCount > 0"
                 type="button"
-                class="flex min-h-12 flex-1 items-center justify-center rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.99] dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                class="flex min-h-12 flex-1 items-center justify-center rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-slate-50 active:scale-[0.98] dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 motion-reduce:active:scale-100"
                 @click="clearAllFilters"
               >
                 Reset
               </button>
               <button
                 type="button"
-                class="flex min-h-12 min-w-0 items-center justify-center rounded-xl bg-rose-600 text-sm font-bold text-white shadow-lg shadow-rose-600/25 transition hover:bg-rose-500 active:scale-[0.99]"
+                class="flex min-h-12 min-w-0 items-center justify-center rounded-xl bg-rose-600 text-sm font-bold text-white shadow-lg shadow-rose-600/25 transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-rose-500 hover:shadow-xl hover:shadow-rose-600/20 active:scale-[0.98] motion-reduce:active:scale-100"
                 :class="activeFilterCount > 0 ? 'flex-[2]' : 'w-full flex-1'"
                 @click="closeMobileFilters"
               >
@@ -372,16 +373,16 @@ function closeMobileFilters() {
         <aside class="hidden w-72 shrink-0 space-y-6 lg:sticky lg:top-24 lg:block">
 
           <!-- Categories -->
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-[box-shadow,border-color] duration-300 ease-out hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Categories</h3>
             <ul class="space-y-1">
               <li v-for="cat in categories" :key="cat">
                 <button
                   type="button"
-                  class="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition"
+                  class="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-[color,background-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
                   :class="
                     activeCategory === cat
-                      ? 'bg-rose-600 text-white font-semibold'
+                      ? 'bg-rose-600 font-semibold text-white shadow-md shadow-rose-600/15'
                       : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                   "
                   @click="activeCategory = cat"
@@ -393,16 +394,16 @@ function closeMobileFilters() {
           </div>
 
           <!-- Sort By -->
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-[box-shadow,border-color] duration-300 ease-out hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">Sort By</h3>
             <ul class="space-y-1">
               <li v-for="opt in sortOptions" :key="opt.value">
                 <button
                   type="button"
-                  class="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition"
+                  class="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium transition-[color,background-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
                   :class="
                     activeSort === opt.value
-                      ? 'bg-rose-600 text-white font-semibold'
+                      ? 'bg-rose-600 font-semibold text-white shadow-md shadow-rose-600/15'
                       : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                   "
                   @click="activeSort = opt.value"
@@ -414,7 +415,7 @@ function closeMobileFilters() {
           </div>
 
           <!-- Popular Tags -->
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-[box-shadow,border-color] duration-300 ease-out hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <h3 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
               <Tag class="h-3.5 w-3.5 text-rose-500" /> Popular Tags
             </h3>
@@ -423,10 +424,10 @@ function closeMobileFilters() {
                 v-for="tag in popularTags"
                 :key="tag"
                 type="button"
-                class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+                class="rounded-full px-3 py-1.5 text-xs font-semibold transition-[color,background-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
                 :class="
                   activeTag === tag
-                    ? 'bg-rose-600 text-white'
+                    ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/25 ring-1 ring-rose-500/30'
                     : 'bg-slate-100 text-slate-700 hover:bg-rose-100 hover:text-rose-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-rose-900/40 dark:hover:text-rose-300'
                 "
                 @click="toggleTag(tag)"
@@ -437,7 +438,7 @@ function closeMobileFilters() {
             <button
               v-if="activeTag"
               type="button"
-              class="mt-3 text-xs font-semibold text-rose-600 hover:underline dark:text-rose-400"
+              class="mt-3 text-xs font-semibold text-rose-600 transition-[opacity,transform] duration-200 hover:underline active:opacity-70 dark:text-rose-400"
               @click="activeTag = null"
             >
               Clear tag filter
@@ -460,7 +461,7 @@ function closeMobileFilters() {
             <button
               v-if="activeFilterCount > 0"
               type="button"
-              class="hidden items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 lg:inline-flex"
+              class="hidden items-center gap-1 text-xs font-semibold text-rose-600 transition-[opacity,transform] duration-200 hover:opacity-80 active:scale-95 dark:text-rose-400 lg:inline-flex motion-reduce:active:scale-100"
               @click="clearAllFilters"
             >
               <X class="h-3 w-3" /> Clear filters

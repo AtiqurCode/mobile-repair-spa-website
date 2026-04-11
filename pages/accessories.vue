@@ -90,27 +90,37 @@ function firstStr(val: unknown): string {
 
 function applyRouteQuery() {
   const b = firstStr(route.query.brand)
-  if (!b || b === 'all') {
-    brandFilter.value = 'all'
-  } else if (accessoryBrandList.includes(b as AccessoryBrand)) {
-    brandFilter.value = b
-  } else {
-    brandFilter.value = 'all'
-  }
-  lineFilter.value = firstStr(route.query.line)
-  versionFilter.value = firstStr(route.query.version)
+  const rawLine = firstStr(route.query.line)
+  const rawVer = firstStr(route.query.version)
   const cats = firstStr(route.query.categories) || firstStr(route.query.category)
   categoryFilters.value = cats ? cats.split(',').map((c) => c.trim()).filter(Boolean) : []
   searchQuery.value = firstStr(route.query.q)
-  expandedLineId.value = lineFilter.value || ''
-  openBrandId.value = brandFilter.value !== 'all' ? brandFilter.value : ''
+
+  // Only hydrate line/version when brand is set. Otherwise ?line=… without brand left
+  // brand=all + line filled → filter watch clears line/version and feels like "brand reset".
+  if (!b || b === 'all' || !accessoryBrandList.includes(b as AccessoryBrand)) {
+    brandFilter.value = 'all'
+    lineFilter.value = ''
+    versionFilter.value = ''
+    expandedLineId.value = ''
+    openBrandId.value = ''
+  } else {
+    brandFilter.value = b as AccessoryBrand
+    lineFilter.value = rawLine
+    versionFilter.value = rawVer
+    expandedLineId.value = rawLine || ''
+    openBrandId.value = b
+  }
 }
 
 function pushQuery() {
   const q: Record<string, string> = {}
-  if (brandFilter.value && brandFilter.value !== 'all') q.brand = brandFilter.value
-  if (lineFilter.value) q.line = lineFilter.value
-  if (versionFilter.value) q.version = versionFilter.value
+  // Never put line/version in the URL without brand — avoids applyRouteQuery + watch wiping filters.
+  if (brandFilter.value && brandFilter.value !== 'all') {
+    q.brand = brandFilter.value
+    if (lineFilter.value) q.line = lineFilter.value
+    if (versionFilter.value) q.version = versionFilter.value
+  }
   if (categoryFilters.value.length) q.categories = categoryFilters.value.join(',')
   if (searchQuery.value.trim()) q.q = searchQuery.value.trim()
   const fromSvc = firstStr(route.query.fromService)
@@ -138,7 +148,9 @@ watch([brandFilter, lineFilter, versionFilter, categoryFilters, searchQuery], ()
   }
   const validLine = linesForBrand.value.some((l) => l.id === lineFilter.value)
   if (!validLine) lineFilter.value = ''
-  const validVer = versionsForLine.value.some((v) => v.id === versionFilter.value)
+  const ver = versionFilter.value
+  const validVer =
+    !ver || versionsForLine.value.some((v) => v.id === ver)
   if (!validVer) versionFilter.value = ''
   pushQuery()
 })
@@ -253,19 +265,34 @@ function chooseBrand(br: string) {
   lineFilter.value = ''
   versionFilter.value = ''
   expandedLineId.value = ''
-  openBrandId.value = br !== 'all' ? br : ''
+  if (br === 'all') openBrandId.value = ''
+}
+
+/** Brand row: switching brand applies filters + opens panel; same brand only toggles expand/collapse (preserves line/version). */
+function onBrandAccordionClick(br: string) {
+  if (brandFilter.value === br) {
+    openBrandId.value = openBrandId.value === br ? '' : br
+    return
+  }
+  chooseBrand(br)
+  openBrandId.value = br
 }
 
 function chooseLine(lineId: string) {
   lineFilter.value = lineId
   versionFilter.value = ''
-  expandedLineId.value = expandedLineId.value === lineId ? '' : lineId
+  // Always expand the series you tapped (no toggle-to-close). Toggling closed here fought
+  // applyRouteQuery (line still in URL → expandedLineId synced back) and felt like the tree broke.
+  expandedLineId.value = lineId
 }
 
 function chooseVersion(lineId: string, versionId: string) {
   lineFilter.value = lineId
   versionFilter.value = versionId
+  // Keep brand + series expanded so the UI doesn’t close/reopen. Clearing these and having
+  // applyRouteQuery() restore them on the same navigation tick caused layout thrash / scroll jump.
   expandedLineId.value = lineId
+  if (brandFilter.value !== 'all') openBrandId.value = brandFilter.value
 }
 
 function linesFor(br: string) {
@@ -364,7 +391,7 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
     </Transition>
 
     <!-- Mobile: search + filter toggle -->
-    <div class="sticky top-14 z-30 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
+    <div class="sticky top-14 z-30 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur transition-[box-shadow,border-color,background-color] duration-300 ease-out dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
       <div class="flex items-center gap-2">
         <div class="relative min-w-0 flex-1">
           <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -372,12 +399,17 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
             v-model="searchQuery"
             type="text"
             placeholder="Search accessories…"
-            class="w-full rounded-full border border-slate-300 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            class="w-full rounded-full border border-slate-300 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-[border-color,box-shadow,background-color] duration-200 ease-out focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           >
         </div>
         <button
           type="button"
-          class="relative inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-2 rounded-2xl border border-slate-300 px-3 text-xs font-bold uppercase tracking-wide dark:border-slate-600"
+          class="relative inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-2 rounded-2xl border px-3 text-xs font-bold uppercase tracking-wide transition-[color,background-color,border-color,transform,box-shadow] duration-200 ease-out active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100"
+          :class="
+            mobileFiltersOpen || activeFilterCount > 0
+              ? 'border-rose-500 bg-rose-50 text-rose-700 shadow-sm shadow-rose-500/10 dark:border-rose-500 dark:bg-rose-950/50 dark:text-rose-300'
+              : 'border-slate-300 bg-white text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
+          "
           aria-haspopup="dialog"
           :aria-expanded="mobileFiltersOpen"
           @click="mobileFiltersOpen = true"
@@ -400,21 +432,21 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
         role="presentation"
       >
         <div
-          class="absolute inset-0 bg-slate-900/50 backdrop-blur-[3px] transition-opacity duration-300"
-          :class="mobileFiltersOpen ? 'opacity-100' : 'opacity-0'"
+          class="absolute inset-0 bg-slate-900/55 backdrop-blur-[6px] transition-[opacity,backdrop-filter] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-opacity motion-reduce:duration-200"
+          :class="mobileFiltersOpen ? 'opacity-100' : 'pointer-events-none opacity-0'"
           aria-hidden="true"
           @click="closeMobileFilters"
         />
 
         <div
-          class="absolute inset-x-0 bottom-0 flex max-h-[min(88dvh,680px)] flex-col rounded-t-[1.25rem] bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] ring-1 ring-slate-200/80 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] dark:bg-slate-900 dark:ring-slate-700"
-          :class="mobileFiltersOpen ? 'translate-y-0' : 'translate-y-full'"
+          class="absolute inset-x-0 bottom-0 flex max-h-[min(88dvh,680px)] flex-col rounded-t-[1.35rem] bg-white shadow-[0_-12px_48px_rgba(0,0,0,0.14)] ring-1 ring-slate-200/80 transition-[transform,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-transform motion-reduce:duration-200 dark:bg-slate-900 dark:ring-slate-700"
+          :class="mobileFiltersOpen ? 'translate-y-0' : 'pointer-events-none translate-y-full'"
           role="dialog"
           aria-modal="true"
           aria-labelledby="mobile-accessories-filters-title"
         >
           <div class="flex shrink-0 flex-col items-center pt-2 pb-1">
-            <div class="h-1 w-12 rounded-full bg-slate-300 dark:bg-slate-600" aria-hidden="true" />
+            <div class="h-1 w-12 rounded-full bg-slate-300 transition-colors duration-200 dark:bg-slate-600" aria-hidden="true" />
           </div>
 
           <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 pb-3 pt-1 dark:border-slate-800">
@@ -422,13 +454,13 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
               <h2 id="mobile-accessories-filters-title" class="text-lg font-bold text-slate-900 dark:text-white">
                 Filters
               </h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">
+              <p class="text-xs text-slate-500 transition-opacity duration-200 dark:text-slate-400">
                 {{ filteredList.length }} item{{ filteredList.length !== 1 ? 's' : '' }} match
               </p>
             </div>
             <button
               type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition-[background-color,transform] duration-200 ease-out hover:scale-105 hover:bg-slate-200 active:scale-95 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
               aria-label="Close filters"
               @click="closeMobileFilters"
             >
@@ -436,81 +468,113 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
             </button>
           </div>
 
-          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth px-4 py-4">
             <!-- Brand -->
-            <details open class="group rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
-              <summary class="flex cursor-pointer list-none items-center justify-between">
+            <details open class="group rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition-shadow duration-300 ease-out dark:border-slate-800 dark:bg-slate-900/40">
+              <summary class="flex cursor-pointer list-none items-center justify-between rounded-xl px-1 py-1 -mx-1 transition-colors duration-200 ease-out hover:bg-slate-100/80 dark:hover:bg-slate-800/40">
                 <div>
                   <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Brand</p>
                   <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
                     {{ brandFilter === 'all' ? 'All brands' : brandFilter }}
                   </p>
                 </div>
-                <ChevronDown class="h-5 w-5 text-slate-400 transition group-open:rotate-180" />
+                <ChevronDown class="h-5 w-5 shrink-0 text-slate-400 transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none group-open:rotate-180" />
               </summary>
 
               <!-- Nested collapse tree -->
               <div class="mt-4 space-y-2">
                 <button
                   type="button"
-                  class="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-semibold transition dark:border-slate-700"
-                  :class="brandFilter === 'all' ? 'border-rose-500 bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-200' : 'border-slate-200 bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200'"
+                  class="flex w-full min-h-[3.25rem] items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition-[color,background-color,border-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none dark:border-slate-700"
+                  :class="brandFilter === 'all' ? 'border-rose-500 bg-rose-50 text-rose-800 shadow-sm shadow-rose-500/10 dark:bg-rose-950/40 dark:text-rose-200' : 'border-slate-200 bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200'"
                   @click="chooseBrand('all')"
                 >
-                  All brands
-                  <span v-if="brandFilter === 'all'" class="text-xs font-bold text-rose-600 dark:text-rose-300">Selected</span>
+                  <span class="min-w-0">All brands</span>
+                  <span class="inline-flex w-[4.5rem] shrink-0 items-center justify-end">
+                    <span
+                      class="text-xs font-bold transition-opacity duration-200 ease-in-out"
+                      :class="brandFilter === 'all' ? 'text-rose-600 opacity-100 dark:text-rose-300' : 'pointer-events-none opacity-0'"
+                    >Selected</span>
+                  </span>
                 </button>
 
                 <div
                   v-for="br in accessoryBrandList"
                   :key="br"
-                  class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+                  class="contain-[layout] overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
                 >
                   <button
                     type="button"
-                    class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold transition"
+                    class="flex w-full min-h-[3.25rem] items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold transition-[color,background-color] duration-300 ease-in-out motion-reduce:transition-none"
                     :class="openBrandId === br ? 'bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-200' : 'bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-200'"
-                    @click="openBrandId = openBrandId === br ? '' : br; chooseBrand(br)"
+                    @click="onBrandAccordionClick(br)"
                   >
-                    <span>{{ br }}</span>
-                    <span class="inline-flex items-center gap-2">
-                      <span v-if="brandFilter === br" class="text-xs font-bold text-rose-600 dark:text-rose-300">Selected</span>
-                      <ChevronDown class="h-4 w-4 text-slate-400 transition" :class="openBrandId === br ? 'rotate-180' : ''" />
+                    <span class="min-w-0 truncate">{{ br }}</span>
+                    <span class="inline-flex shrink-0 items-center gap-2">
+                      <span class="inline-flex w-[4.5rem] justify-end">
+                        <span
+                          class="text-xs font-bold transition-opacity duration-200 ease-in-out"
+                          :class="brandFilter === br ? 'text-rose-600 opacity-100 dark:text-rose-300' : 'pointer-events-none opacity-0'"
+                        >Selected</span>
+                      </span>
+                      <ChevronDown
+                        class="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] motion-reduce:transition-none"
+                        :class="openBrandId === br ? 'rotate-180' : ''"
+                      />
                     </span>
                   </button>
 
-                  <div v-if="openBrandId === br" class="border-t border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/30">
-                    <p class="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                      {{ br === 'Apple' ? 'iPhone releases' : 'Device releases' }}
-                    </p>
-                    <div class="space-y-2">
-                      <div
-                        v-for="ln in linesFor(br)"
-                        :key="ln.id"
-                        class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800"
-                      >
-                        <button
-                          type="button"
-                          class="flex w-full items-center justify-between bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-900 dark:bg-slate-950 dark:text-slate-200"
-                          @click="chooseLine(ln.id)"
-                        >
-                          <span class="truncate">{{ ln.label }}</span>
-                          <ChevronDown class="h-4 w-4 text-slate-400 transition" :class="expandedLineId === ln.id ? 'rotate-180' : ''" />
-                        </button>
-
-                        <div v-if="expandedLineId === ln.id" class="bg-slate-50 p-3 dark:bg-slate-900/30">
-                          <div class="flex flex-col gap-2">
+                  <div
+                    class="grid overflow-hidden transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] motion-reduce:transition-none motion-reduce:duration-0"
+                    :class="openBrandId === br ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
+                  >
+                    <div class="min-h-0">
+                      <div class="border-t border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/30">
+                        <p class="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                          {{ br === 'Apple' ? 'iPhone releases' : 'Device releases' }}
+                        </p>
+                        <div class="flex flex-col gap-2">
+                          <div
+                            v-for="ln in linesFor(br)"
+                            :key="ln.id"
+                            class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800"
+                          >
                             <button
-                              v-for="v in ln.versions"
-                              :key="v.id"
                               type="button"
-                              class="flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm font-semibold transition"
-                              :class="versionFilter === v.id ? 'border-rose-500 bg-rose-600 text-white' : 'border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200'"
-                              @click="chooseVersion(ln.id, v.id)"
+                              class="flex w-full min-h-[2.75rem] items-center justify-between gap-2 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-900 transition-[color,background-color] duration-300 ease-in-out dark:bg-slate-950 dark:text-slate-200 motion-reduce:transition-none"
+                              :class="expandedLineId === ln.id ? 'bg-rose-50/50 dark:bg-rose-950/20' : ''"
+                              @click="chooseLine(ln.id)"
                             >
-                              <span>{{ v.label }}</span>
-                              <span v-if="versionFilter === v.id" class="text-xs font-bold">Selected</span>
+                              <span class="min-w-0 truncate">{{ ln.label }}</span>
+                              <ChevronDown
+                                class="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] motion-reduce:transition-none"
+                                :class="expandedLineId === ln.id ? 'rotate-180' : ''"
+                              />
                             </button>
+
+                            <div
+                              v-if="expandedLineId === ln.id"
+                              class="border-t border-slate-200 bg-slate-50 p-3 motion-reduce:transition-none dark:border-slate-800 dark:bg-slate-900/30"
+                            >
+                              <div class="flex flex-col gap-2">
+                                <button
+                                  v-for="v in ln.versions"
+                                  :key="v.id"
+                                  type="button"
+                                  class="flex min-h-[2.5rem] w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-[color,background-color,border-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
+                                  :class="versionFilter === v.id ? 'border-rose-500 bg-rose-600 text-white shadow-sm shadow-rose-600/25' : 'border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200'"
+                                  @click="chooseVersion(ln.id, v.id)"
+                                >
+                                  <span class="min-w-0 truncate">{{ v.label }}</span>
+                                  <span class="inline-flex w-[4.5rem] shrink-0 justify-end">
+                                    <span
+                                      class="text-xs font-bold transition-opacity duration-200 ease-in-out"
+                                      :class="versionFilter === v.id ? 'text-white opacity-100' : 'pointer-events-none text-white opacity-0'"
+                                    >Selected</span>
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -521,8 +585,8 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
             </details>
 
             <!-- Category (multi checkbox) -->
-            <details open class="mt-3 group rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
-              <summary class="flex cursor-pointer list-none items-center justify-between">
+            <details open class="group mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition-shadow duration-300 ease-out dark:border-slate-800 dark:bg-slate-900/40">
+              <summary class="flex cursor-pointer list-none items-center justify-between rounded-xl px-1 py-1 -mx-1 transition-colors duration-200 ease-out hover:bg-slate-100/80 dark:hover:bg-slate-800/40">
                 <div>
                   <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Category</p>
                   <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
@@ -530,19 +594,24 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
                     <template v-else>{{ categoryFilters.length }} selected</template>
                   </p>
                 </div>
-                <ChevronDown class="h-5 w-5 text-slate-400 transition group-open:rotate-180" />
+                <ChevronDown class="h-5 w-5 shrink-0 text-slate-400 transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none group-open:rotate-180" />
               </summary>
 
               <div class="mt-4 space-y-2">
                 <label
                   v-for="c in categories.filter((x) => x !== 'All')"
                   :key="c"
-                  class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  class="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
+                  :class="
+                    categoryFilters.includes(c)
+                      ? 'border-rose-400/45 bg-rose-50/50 text-slate-900 shadow-sm shadow-rose-500/10 dark:border-rose-700/55 dark:bg-rose-950/40 dark:text-white'
+                      : 'border-slate-200 bg-white text-slate-800 hover:border-rose-200/80 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-rose-800/50'
+                  "
                 >
                   <span>{{ c }}</span>
                   <input
                     type="checkbox"
-                    class="h-5 w-5 accent-rose-600"
+                    class="h-5 w-5 accent-rose-600 transition-opacity duration-200 ease-in-out motion-reduce:transition-none"
                     :checked="categoryFilters.includes(c)"
                     @change="toggleCategory(c)"
                   >
@@ -559,14 +628,14 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
               <button
                 v-if="activeFilterCount > 0"
                 type="button"
-                class="flex min-h-12 flex-1 items-center justify-center rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.99] dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                class="flex min-h-12 flex-1 items-center justify-center rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-slate-50 active:scale-[0.98] dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 motion-reduce:active:scale-100"
                 @click="clearFilters"
               >
                 Reset
               </button>
               <button
                 type="button"
-                class="flex min-h-12 min-w-0 items-center justify-center rounded-xl bg-rose-600 text-sm font-bold text-white shadow-lg shadow-rose-600/25 transition hover:bg-rose-500 active:scale-[0.99]"
+                class="flex min-h-12 min-w-0 items-center justify-center rounded-xl bg-rose-600 text-sm font-bold text-white shadow-lg shadow-rose-600/25 transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-rose-500 hover:shadow-xl hover:shadow-rose-600/20 active:scale-[0.98] motion-reduce:active:scale-100"
                 :class="activeFilterCount > 0 ? 'flex-[2]' : 'w-full flex-1'"
                 @click="closeMobileFilters"
               >
@@ -582,92 +651,124 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
       <div class="flex flex-col gap-8 lg:flex-row lg:items-start">
         <!-- Desktop sidebar (restores column divider) -->
         <aside class="hidden w-80 shrink-0 lg:sticky lg:top-24 lg:block">
-          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-[box-shadow,border-color] duration-300 ease-out hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
             <div class="relative">
               <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 v-model="searchQuery"
                 type="text"
                 placeholder="Search accessories…"
-                class="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                class="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition-[border-color,box-shadow,background-color] duration-200 ease-out focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               >
             </div>
           </div>
 
-          <div class="mt-4 border-r border-slate-200 pr-6 dark:border-slate-800">
-            <details open class="group rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
-              <summary class="flex cursor-pointer list-none items-center justify-between">
+          <div class="mt-4 border-r border-slate-200 pr-6 transition-colors duration-300 dark:border-slate-800">
+            <details open class="group rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition-shadow duration-300 ease-out dark:border-slate-800 dark:bg-slate-900/40">
+              <summary class="flex cursor-pointer list-none items-center justify-between rounded-xl px-1 py-1 -mx-1 transition-colors duration-200 ease-out hover:bg-slate-100/80 dark:hover:bg-slate-800/40">
                 <div>
                   <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Brand</p>
                   <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
                     {{ brandFilter === 'all' ? 'All brands' : brandFilter }}
                   </p>
                 </div>
-                <ChevronDown class="h-5 w-5 text-slate-400 transition group-open:rotate-180" />
+                <ChevronDown class="h-5 w-5 shrink-0 text-slate-400 transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none group-open:rotate-180" />
               </summary>
 
               <!-- Nested collapse tree -->
               <div class="mt-4 space-y-2">
                 <button
                   type="button"
-                  class="flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-semibold transition dark:border-slate-700"
-                  :class="brandFilter === 'all' ? 'border-rose-500 bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-200' : 'border-slate-200 bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200'"
+                  class="flex w-full min-h-[3.25rem] items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition-[color,background-color,border-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none dark:border-slate-700"
+                  :class="brandFilter === 'all' ? 'border-rose-500 bg-rose-50 text-rose-800 shadow-sm shadow-rose-500/10 dark:bg-rose-950/40 dark:text-rose-200' : 'border-slate-200 bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-200'"
                   @click="chooseBrand('all')"
                 >
-                  All brands
-                  <span v-if="brandFilter === 'all'" class="text-xs font-bold text-rose-600 dark:text-rose-300">Selected</span>
+                  <span class="min-w-0">All brands</span>
+                  <span class="inline-flex w-[4.5rem] shrink-0 items-center justify-end">
+                    <span
+                      class="text-xs font-bold transition-opacity duration-200 ease-in-out"
+                      :class="brandFilter === 'all' ? 'text-rose-600 opacity-100 dark:text-rose-300' : 'pointer-events-none opacity-0'"
+                    >Selected</span>
+                  </span>
                 </button>
 
                 <div
                   v-for="br in accessoryBrandList"
                   :key="br"
-                  class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+                  class="contain-[layout] overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
                 >
                   <button
                     type="button"
-                    class="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold transition"
+                    class="flex w-full min-h-[3.25rem] items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold transition-[color,background-color] duration-300 ease-in-out motion-reduce:transition-none"
                     :class="openBrandId === br ? 'bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-200' : 'bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-200'"
-                    @click="openBrandId = openBrandId === br ? '' : br; chooseBrand(br)"
+                    @click="onBrandAccordionClick(br)"
                   >
-                    <span>{{ br }}</span>
-                    <span class="inline-flex items-center gap-2">
-                      <span v-if="brandFilter === br" class="text-xs font-bold text-rose-600 dark:text-rose-300">Selected</span>
-                      <ChevronDown class="h-4 w-4 text-slate-400 transition" :class="openBrandId === br ? 'rotate-180' : ''" />
+                    <span class="min-w-0 truncate">{{ br }}</span>
+                    <span class="inline-flex shrink-0 items-center gap-2">
+                      <span class="inline-flex w-[4.5rem] justify-end">
+                        <span
+                          class="text-xs font-bold transition-opacity duration-200 ease-in-out"
+                          :class="brandFilter === br ? 'text-rose-600 opacity-100 dark:text-rose-300' : 'pointer-events-none opacity-0'"
+                        >Selected</span>
+                      </span>
+                      <ChevronDown
+                        class="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] motion-reduce:transition-none"
+                        :class="openBrandId === br ? 'rotate-180' : ''"
+                      />
                     </span>
                   </button>
 
-                  <div v-if="openBrandId === br" class="border-t border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/30">
-                    <p class="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                      {{ br === 'Apple' ? 'iPhone releases' : 'Device releases' }}
-                    </p>
-                    <div class="space-y-2">
-                      <div
-                        v-for="ln in linesFor(br)"
-                        :key="ln.id"
-                        class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800"
-                      >
-                        <button
-                          type="button"
-                          class="flex w-full items-center justify-between bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-900 dark:bg-slate-950 dark:text-slate-200"
-                          @click="chooseLine(ln.id)"
-                        >
-                          <span class="truncate">{{ ln.label }}</span>
-                          <ChevronDown class="h-4 w-4 text-slate-400 transition" :class="expandedLineId === ln.id ? 'rotate-180' : ''" />
-                        </button>
-
-                        <div v-if="expandedLineId === ln.id" class="bg-slate-50 p-3 dark:bg-slate-900/30">
-                          <div class="flex flex-col gap-2">
+                  <div
+                    class="grid overflow-hidden transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] motion-reduce:transition-none motion-reduce:duration-0"
+                    :class="openBrandId === br ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
+                  >
+                    <div class="min-h-0">
+                      <div class="border-t border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/30">
+                        <p class="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+                          {{ br === 'Apple' ? 'iPhone releases' : 'Device releases' }}
+                        </p>
+                        <div class="flex flex-col gap-2">
+                          <div
+                            v-for="ln in linesFor(br)"
+                            :key="ln.id"
+                            class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800"
+                          >
                             <button
-                              v-for="v in ln.versions"
-                              :key="v.id"
                               type="button"
-                              class="flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm font-semibold transition"
-                              :class="versionFilter === v.id ? 'border-rose-500 bg-rose-600 text-white' : 'border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200'"
-                              @click="chooseVersion(ln.id, v.id)"
+                              class="flex w-full min-h-[2.75rem] items-center justify-between gap-2 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-900 transition-[color,background-color] duration-300 ease-in-out dark:bg-slate-950 dark:text-slate-200 motion-reduce:transition-none"
+                              :class="expandedLineId === ln.id ? 'bg-rose-50/50 dark:bg-rose-950/20' : ''"
+                              @click="chooseLine(ln.id)"
                             >
-                              <span>{{ v.label }}</span>
-                              <span v-if="versionFilter === v.id" class="text-xs font-bold">Selected</span>
+                              <span class="min-w-0 truncate">{{ ln.label }}</span>
+                              <ChevronDown
+                                class="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] motion-reduce:transition-none"
+                                :class="expandedLineId === ln.id ? 'rotate-180' : ''"
+                              />
                             </button>
+
+                            <div
+                              v-if="expandedLineId === ln.id"
+                              class="border-t border-slate-200 bg-slate-50 p-3 motion-reduce:transition-none dark:border-slate-800 dark:bg-slate-900/30"
+                            >
+                              <div class="flex flex-col gap-2">
+                                <button
+                                  v-for="v in ln.versions"
+                                  :key="v.id"
+                                  type="button"
+                                  class="flex min-h-[2.5rem] w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-[color,background-color,border-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
+                                  :class="versionFilter === v.id ? 'border-rose-500 bg-rose-600 text-white shadow-sm shadow-rose-600/25' : 'border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200'"
+                                  @click="chooseVersion(ln.id, v.id)"
+                                >
+                                  <span class="min-w-0 truncate">{{ v.label }}</span>
+                                  <span class="inline-flex w-[4.5rem] shrink-0 justify-end">
+                                    <span
+                                      class="text-xs font-bold transition-opacity duration-200 ease-in-out"
+                                      :class="versionFilter === v.id ? 'text-white opacity-100' : 'pointer-events-none text-white opacity-0'"
+                                    >Selected</span>
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -677,8 +778,8 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
               </div>
             </details>
 
-            <details open class="mt-3 group rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
-              <summary class="flex cursor-pointer list-none items-center justify-between">
+            <details open class="group mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition-shadow duration-300 ease-out dark:border-slate-800 dark:bg-slate-900/40">
+              <summary class="flex cursor-pointer list-none items-center justify-between rounded-xl px-1 py-1 -mx-1 transition-colors duration-200 ease-out hover:bg-slate-100/80 dark:hover:bg-slate-800/40">
                 <div>
                   <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Category</p>
                   <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
@@ -686,19 +787,24 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
                     <template v-else>{{ categoryFilters.length }} selected</template>
                   </p>
                 </div>
-                <ChevronDown class="h-5 w-5 text-slate-400 transition group-open:rotate-180" />
+                <ChevronDown class="h-5 w-5 shrink-0 text-slate-400 transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none group-open:rotate-180" />
               </summary>
 
               <div class="mt-4 space-y-2">
                 <label
                   v-for="c in categories.filter((x) => x !== 'All')"
                   :key="c"
-                  class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  class="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition-[border-color,background-color,box-shadow] duration-300 ease-in-out motion-reduce:transition-none"
+                  :class="
+                    categoryFilters.includes(c)
+                      ? 'border-rose-400/45 bg-rose-50/50 text-slate-900 shadow-sm shadow-rose-500/10 dark:border-rose-700/55 dark:bg-rose-950/40 dark:text-white'
+                      : 'border-slate-200 bg-white text-slate-800 hover:border-rose-200/80 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-rose-800/50'
+                  "
                 >
                   <span>{{ c }}</span>
                   <input
                     type="checkbox"
-                    class="h-5 w-5 accent-rose-600"
+                    class="h-5 w-5 accent-rose-600 transition-opacity duration-200 ease-in-out motion-reduce:transition-none"
                     :checked="categoryFilters.includes(c)"
                     @change="toggleCategory(c)"
                   >
@@ -709,7 +815,7 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
             <button
               v-if="activeFilterCount > 0"
               type="button"
-              class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
+              class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 transition-[background-color,transform,border-color] duration-200 ease-out hover:bg-slate-50 active:scale-[0.99] dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900 motion-reduce:active:scale-100"
               @click="clearFilters"
             >
               <X class="h-4 w-4" /> Clear all
