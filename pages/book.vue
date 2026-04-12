@@ -117,7 +117,7 @@ function syncAccQuery(next: string[]) {
 type BookingForm = {
   name: string
   phone: string
-  email: string
+  address: string
   deviceBrand: string
   deviceModel: string
   service: string
@@ -126,12 +126,12 @@ type BookingForm = {
   notes: string
 }
 
-type BookingSnapshot = BookingForm & { reference: string }
+type BookingSnapshot = BookingForm & { reference: string; accessories: string[] }
 
 const EMPTY_FORM: BookingForm = {
   name: '',
   phone: '',
-  email: '',
+  address: '',
   deviceBrand: '',
   deviceModel: '',
   service: '',
@@ -151,6 +151,89 @@ const reference = ref('')
 const lastBooking = ref<BookingSnapshot | null>(null)
 
 const minDate = computed(() => new Date().toISOString().slice(0, 10))
+
+/** OpenStreetMap suggestions via Photon — https://photon.komoot.io/ */
+const photonSuggestions = ref<{ label: string; address: string }[]>([])
+const photonOpen = ref(false)
+const photonLoading = ref(false)
+const photonHighlight = ref(-1)
+let photonDebounce: ReturnType<typeof setTimeout> | null = null
+let photonBlurClose: ReturnType<typeof setTimeout> | null = null
+
+async function fetchPhotonSuggestions() {
+  const q = form.address.trim()
+  if (q.length < 2) {
+    photonSuggestions.value = []
+    photonOpen.value = false
+    return
+  }
+  photonLoading.value = true
+  try {
+    const res = await $fetch<{ suggestions: { label: string; address: string }[] }>('/api/photon-suggest', {
+      query: { q, limit: 8 },
+    })
+    photonSuggestions.value = res.suggestions
+    photonOpen.value = photonSuggestions.value.length > 0
+    photonHighlight.value = -1
+  } catch {
+    photonSuggestions.value = []
+    photonOpen.value = false
+  } finally {
+    photonLoading.value = false
+  }
+}
+
+function onAddressSuggestInput() {
+  if (photonDebounce) clearTimeout(photonDebounce)
+  photonDebounce = setTimeout(() => {
+    void fetchPhotonSuggestions()
+  }, 280)
+}
+
+function pickPhotonSuggestion(s: { label: string; address: string }) {
+  form.address = s.address
+  photonOpen.value = false
+  photonSuggestions.value = []
+  photonHighlight.value = -1
+}
+
+function onAddressSuggestKeydown(e: KeyboardEvent) {
+  if (!photonOpen.value || photonSuggestions.value.length === 0) return
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    photonHighlight.value = Math.min(photonHighlight.value + 1, photonSuggestions.value.length - 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    photonHighlight.value = Math.max(photonHighlight.value - 1, -1)
+  } else if (e.key === 'Enter' && photonHighlight.value >= 0) {
+    e.preventDefault()
+    const s = photonSuggestions.value[photonHighlight.value]
+    if (s) pickPhotonSuggestion(s)
+  } else if (e.key === 'Escape') {
+    photonOpen.value = false
+  }
+}
+
+function onAddressSuggestBlur() {
+  photonBlurClose = setTimeout(() => {
+    photonOpen.value = false
+  }, 180)
+}
+
+function onAddressSuggestFocus() {
+  if (photonBlurClose) {
+    clearTimeout(photonBlurClose)
+    photonBlurClose = null
+  }
+  if (form.address.trim().length >= 2 && photonSuggestions.value.length > 0) {
+    photonOpen.value = true
+  }
+}
+
+onUnmounted(() => {
+  if (photonDebounce) clearTimeout(photonDebounce)
+  if (photonBlurClose) clearTimeout(photonBlurClose)
+})
 
 function safeDecode(s: string) {
   try {
@@ -186,30 +269,10 @@ function applyBookingQuery() {
   } else {
     selectedAccessoryUuids.value = []
   }
-  const picked = selectedAccessories.value
-
-  const detailAccessoryName =
-    detailRaw && /^accessory\s*:/i.test(detailRaw)
-      ? detailRaw.replace(/^accessory\s*:\s*/i, '').trim()
-      : ''
-  /** `detail` is frozen from the first link; `acc` is updated in the picker — omit stale Accessory: line when that item is already in the selection. */
-  const omitAccessoryDetailLine =
-    Boolean(
-      accRaw &&
-        picked.length &&
-        detailAccessoryName &&
-        picked.some((a) => a.name.trim().toLowerCase() === detailAccessoryName.toLowerCase()),
-    )
 
   const noteLines: string[] = []
-  if (detailRaw) {
-    const isAccessory = /^accessory\s*:/i.test(detailRaw)
-    if (!(isAccessory && omitAccessoryDetailLine)) {
-      noteLines.push(isAccessory ? detailRaw : `Requested service (from listing): ${detailRaw}`)
-    }
-  }
-  if (accRaw && picked.length) {
-    noteLines.push(`Accessories (selected): ${picked.map((a) => a.name.trim()).join(', ')}`)
+  if (detailRaw && !/^accessory\s*:/i.test(detailRaw)) {
+    noteLines.push(`Requested service (from listing): ${detailRaw}`)
   }
   if (noteLines.length) {
     form.notes = `${noteLines.join('\n')}\n`
@@ -235,13 +298,14 @@ function buildSummary() {
     `Reference: ${b.reference}`,
     `Name: ${b.name}`,
     `Phone: ${b.phone}`,
-    `Email: ${b.email}`,
     `Service: ${b.service}`,
+    b.address ? `Address: ${b.address}` : '',
     b.deviceBrand ? `Device brand: ${b.deviceBrand}` : '',
     b.deviceModel ? `Device model: ${b.deviceModel}` : '',
     b.preferredDate ? `Preferred date: ${b.preferredDate}` : '',
     b.preferredTime ? `Preferred time: ${timeSlots.find((t) => t.value === b.preferredTime)?.label ?? b.preferredTime}` : '',
-    b.notes ? `Notes: ${b.notes}` : '',
+    b.accessories?.length ? `Accessories: ${b.accessories.join(', ')}` : '',
+    b.notes ? `Problem description: ${b.notes}` : '',
   ].filter(Boolean)
   return lines.join('\n')
 }
@@ -256,8 +320,12 @@ async function copySummary() {
 
 async function handleSubmit() {
   errorMessage.value = ''
-  if (!form.name.trim() || !form.phone.trim() || !form.email.trim() || !form.service) {
-    errorMessage.value = 'Please fill in your name, phone, email, and the service you need.'
+  if (!form.name.trim() || !form.phone.trim() || !form.service) {
+    errorMessage.value = 'Please fill in your name, phone, and the service you need.'
+    return
+  }
+  if (!form.address.trim()) {
+    errorMessage.value = 'Please enter your appointment / service address.'
     return
   }
 
@@ -268,13 +336,14 @@ async function handleSubmit() {
       body: {
         name: form.name.trim(),
         phone: form.phone.trim(),
-        email: form.email.trim(),
         service: form.service,
         deviceBrand: form.deviceBrand,
         deviceModel: form.deviceModel.trim(),
+        address: form.address.trim(),
         preferredDate: form.preferredDate,
         preferredTime: form.preferredTime,
         notes: form.notes.trim(),
+        accessories: selectedAccessories.value.map((a) => a.name),
       },
     })
     reference.value = res.reference
@@ -282,13 +351,14 @@ async function handleSubmit() {
       reference: res.reference,
       name: form.name.trim(),
       phone: form.phone.trim(),
-      email: form.email.trim(),
+      address: form.address.trim(),
       service: form.service,
       deviceBrand: form.deviceBrand,
       deviceModel: form.deviceModel.trim(),
       preferredDate: form.preferredDate,
       preferredTime: form.preferredTime,
       notes: form.notes.trim(),
+      accessories: selectedAccessories.value.map((a) => a.name),
     }
     submitted.value = true
     Object.assign(form, EMPTY_FORM)
@@ -317,7 +387,7 @@ function bookAnother() {
         </p>
         <h1 class="mt-4 text-3xl font-extrabold sm:text-4xl">Schedule Your Repair</h1>
         <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
-          Tell us how to reach you and what you need. We’ll confirm your slot by phone or email — usually within a few hours during business hours.
+          Tell us how to reach you and what you need. We’ll confirm your slot by phone — usually within a few hours during business hours.
         </p>
       </div>
     </section>
@@ -332,7 +402,7 @@ function bookAnother() {
 
           <form class="mt-6 space-y-4" @submit.prevent="handleSubmit">
             <div class="grid gap-4 sm:grid-cols-2">
-              <div class="sm:col-span-2">
+              <div>
                 <label for="b-name" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">Full name <span class="text-rose-500">*</span></label>
                 <input
                   id="b-name"
@@ -356,17 +426,55 @@ function bookAnother() {
                   class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 >
               </div>
-              <div>
-                <label for="b-email" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">Email <span class="text-rose-500">*</span></label>
-                <input
-                  id="b-email"
-                  v-model="form.email"
-                  type="email"
-                  autocomplete="email"
-                  required
-                  placeholder="you@example.com"
-                  class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                >
+              <div class="sm:col-span-2">
+                <label for="b-address" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  Appointment / service address <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                  <textarea
+                    id="b-address"
+                    v-model="form.address"
+                    autocomplete="street-address"
+                    required
+                    rows="2"
+                    placeholder="Start typing — pick a suggestion or write the full address"
+                    class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    aria-autocomplete="list"
+                    :aria-expanded="photonOpen"
+                    aria-controls="photon-address-list"
+                    @input="onAddressSuggestInput"
+                    @keydown="onAddressSuggestKeydown"
+                    @focus="onAddressSuggestFocus"
+                    @blur="onAddressSuggestBlur"
+                  />
+                  <p
+                    v-if="photonLoading"
+                    class="pointer-events-none absolute right-3 top-3 text-[10px] font-medium text-slate-400"
+                  >
+                    …
+                  </p>
+                  <ul
+                    v-show="photonOpen && photonSuggestions.length > 0"
+                    id="photon-address-list"
+                    role="listbox"
+                    class="absolute z-30 mt-1 max-h-52 w-full overflow-auto rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-lg dark:border-slate-600 dark:bg-slate-900"
+                  >
+                    <li
+                      v-for="(s, i) in photonSuggestions"
+                      :key="i"
+                      role="option"
+                      :aria-selected="i === photonHighlight"
+                      class="cursor-pointer px-3 py-2 text-left text-slate-800 hover:bg-rose-50 dark:text-slate-100 dark:hover:bg-slate-800"
+                      :class="i === photonHighlight ? 'bg-rose-50 dark:bg-slate-800' : ''"
+                      @mousedown.prevent="pickPhotonSuggestion(s)"
+                    >
+                      <span class="block font-medium leading-snug">{{ s.label }}</span>
+                      <span v-if="s.address !== s.label" class="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{{
+                        s.address
+                      }}</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
 
@@ -412,7 +520,7 @@ function bookAnother() {
                 <div>
                   <p class="text-sm font-bold text-slate-900 dark:text-white">Accessories</p>
                   <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Select any accessories you want with your repair.
+                    Add anything you want with this repair — your choices stay in this box only; we don’t copy them into the problem description below.
                   </p>
                 </div>
                 <span
@@ -491,12 +599,17 @@ function bookAnother() {
             </div>
 
             <div>
-              <label for="b-notes" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">Notes for our team</label>
+              <label for="b-notes" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                What’s wrong with your phone?
+              </label>
+              <!-- <p class="mb-1.5 text-xs text-slate-500 dark:text-slate-400">
+                Tell us the problem (e.g. cracked screen, won’t charge, no sound, after a drop or water). Our team reads this to prepare for your visit — not your accessory picks above.
+              </p> -->
               <textarea
                 id="b-notes"
                 v-model="form.notes"
                 rows="4"
-                placeholder="Describe the issue, prior repair attempts, or anything else we should know…"
+                placeholder="Example: Screen cracked top-right after a drop; touch still works. Battery also drains in ~3 hours."
                 class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
@@ -529,7 +642,7 @@ function bookAnother() {
           </div>
           <h2 class="mt-4 text-xl font-bold text-slate-900 dark:text-white">Request received</h2>
           <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Save your reference number — our team will use it together with your phone and email to reach you.
+            Save your reference number — our team will use it with your phone to reach you.
           </p>
           <p class="mt-4 inline-block rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-lg font-bold tracking-wide text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
             {{ reference }}
