@@ -3,20 +3,23 @@ import { Check, ChevronLeft, ChevronRight, ChevronDown, Headphones, Search, Slid
 import {
   accessoryBrandList,
   accessoryDeviceCatalog,
-  accessories,
   accessoryFitsLabel,
   filterAccessories,
   formatAccessoryPrice,
   lineLabel,
   versionLabel,
+  type Accessory,
   type AccessoryBrand,
 } from '~/composables/useAccessories'
 import PreviewModal, { type PreviewBadge } from '~/components/PreviewModal.vue'
+import { useCatalogData } from '~/composables/useCatalogData'
 
 useHead({ title: 'Accessories — RapidFix Phone Repair' })
 
 const route = useRoute()
 const router = useRouter()
+
+const { accessories, refresh: refreshCatalog } = useCatalogData()
 
 const brandFilter = ref<string>('all')
 const lineFilter = ref('')
@@ -27,7 +30,7 @@ const mobileFiltersOpen = ref(false)
 const expandedLineId = ref<string>('')
 const openBrandId = ref<string>('')
 const previewOpen = ref(false)
-const previewAccessory = ref<(typeof accessories)[number] | null>(null)
+const previewAccessory = ref<Accessory | null>(null)
 const selectedAccessoryUuids = ref<string[]>([])
 
 function isSelected(uuid: string) {
@@ -67,7 +70,7 @@ onUnmounted(() => {
 
 const categories = computed(() => {
   const s = new Set<string>()
-  for (const a of accessories) s.add(a.category)
+  for (const a of accessories.value) s.add(a.category)
   return ['All', ...[...s].sort()]
 })
 
@@ -137,6 +140,7 @@ watch(
 )
 
 onMounted(() => {
+  void refreshCatalog()
   applyRouteQuery()
 })
 
@@ -164,10 +168,10 @@ const serviceBookingFromRoute = computed(() => {
 })
 
 const selectedAccessories = computed(() => {
-  const map = new Map(accessories.map((a) => [a.uuid, a] as const))
+  const map = new Map(accessories.value.map((a) => [a.uuid, a] as const))
   return selectedAccessoryUuids.value
     .map((uuid) => map.get(uuid))
-    .filter(Boolean) as (typeof accessories)[number][]
+    .filter(Boolean) as Accessory[]
 })
 
 const bookingTo = computed(() => {
@@ -183,7 +187,7 @@ const bookingTo = computed(() => {
 
 const filteredList = computed(() => {
   const b = brandFilter.value === 'all' ? '' : brandFilter.value
-  const list = filterAccessories(accessories, {
+  const list = filterAccessories(accessories.value, {
     brand: b || 'all',
     line: lineFilter.value,
     version: versionFilter.value,
@@ -301,7 +305,7 @@ function linesFor(br: string) {
 }
 
 
-function openAccessoryPreview(a: (typeof accessories)[number]) {
+function openAccessoryPreview(a: Accessory) {
   previewAccessory.value = a
   previewOpen.value = true
 }

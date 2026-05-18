@@ -1,8 +1,21 @@
 <script setup lang="ts">
 import { Clock3, Mail, MapPin, MessageSquare, Phone, Send, type Component } from 'lucide-vue-next'
-import { services as catalogServices } from '~/composables/useServices'
+import { useCatalogData } from '~/composables/useCatalogData'
 
 useHead({ title: 'Contact Us — RapidFix Phone Repair' })
+
+const { services: catalogServices, refresh: refreshCatalog } = useCatalogData()
+
+onMounted(() => {
+  void refreshCatalog()
+})
+
+const services = computed(() => {
+  const names = [...new Set(catalogServices.value.map((s) => s.name))].sort()
+  names.push('Other / Not sure')
+
+  return names
+})
 
 // ── Static data ──────────────────────────────────────────────────────────────
 
@@ -47,9 +60,6 @@ const contactItems: ContactItem[] = [
     value: 'Monday – Sunday: 9AM – 9PM',
   },
 ]
-
-const services = [...new Set(catalogServices.map((s) => s.name))].sort()
-services.push('Other / Not sure')
 
 // ── State ────────────────────────────────────────────────────────────────────
 

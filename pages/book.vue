@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { CalendarCheck2, CheckCircle2, ClipboardCopy, Clock3, Phone, Search, ShieldCheck, Wrench, X } from 'lucide-vue-next'
 import {
-  accessories,
   accessoryFitsLabel,
   formatAccessoryPrice,
+  type Accessory,
   type AccessoryBrand,
 } from '~/composables/useAccessories'
+import { useCatalogData } from '~/composables/useCatalogData'
 import {
   formatPrice,
   mapCategoryToBookingBrand,
-  services,
   type Service,
 } from '~/composables/useServices'
 
@@ -17,6 +17,12 @@ useHead({ title: 'Book an Appointment — RapidFix Phone Repair' })
 
 const config = useRuntimeConfig()
 const contactEmail = config.public.contactEmail as string
+
+const { services, accessories, refresh: refreshCatalog } = useCatalogData()
+
+onMounted(() => {
+  void refreshCatalog()
+})
 
 const serviceCategoryOptions = ['All', 'iPhone', 'Samsung', 'Google Pixel', 'General'] as const
 type ServiceCategoryFilter = (typeof serviceCategoryOptions)[number]
@@ -84,13 +90,13 @@ onUnmounted(() => {
 
 const accessoryCategories = computed(() => {
   const s = new Set<string>()
-  for (const a of accessories) s.add(a.category)
+  for (const a of accessories.value) s.add(a.category)
   return [...s].sort()
 })
 
 const brandThumb = computed<Record<string, string>>(() => {
   const out: Record<string, string> = {}
-  for (const a of accessories) {
+  for (const a of accessories.value) {
     if (!out[a.brand]) out[a.brand] = a.image
   }
   return out
@@ -98,7 +104,7 @@ const brandThumb = computed<Record<string, string>>(() => {
 
 const filteredAccessoryPickerList = computed(() => {
   const q = accessorySearch.value.toLowerCase().trim()
-  return accessories.filter((a) => {
+  return accessories.value.filter((a) => {
     if (accessoryBrandFilter.value !== 'all' && a.brand !== accessoryBrandFilter.value) return false
     if (accessoryCategoryFilter.value !== 'all' && a.category !== accessoryCategoryFilter.value) return false
     if (!q) return true
@@ -113,12 +119,12 @@ const filteredAccessoryPickerList = computed(() => {
 
 const selectedService = computed<Service | null>(() => {
   if (selectedServiceId.value == null) return null
-  return services.find((s) => s.id === selectedServiceId.value) ?? null
+  return services.value.find((s) => s.id === selectedServiceId.value) ?? null
 })
 
 const filteredServicePickerList = computed(() => {
   const q = serviceSearch.value.toLowerCase().trim()
-  return services.filter((s) => {
+  return services.value.filter((s) => {
     if (serviceCategoryFilter.value !== 'All' && s.category !== serviceCategoryFilter.value) return false
     if (!q) return true
     return (
@@ -160,10 +166,10 @@ function parseCsv(val: string): string[] {
 }
 
 const selectedAccessories = computed(() => {
-  const map = new Map(accessories.map((a) => [a.uuid, a] as const))
+  const map = new Map(accessories.value.map((a) => [a.uuid, a] as const))
   return selectedAccessoryUuids.value
     .map((uuid) => map.get(uuid))
-    .filter(Boolean) as (typeof accessories)[number][]
+    .filter(Boolean) as Accessory[]
 })
 
 function syncAccQuery(next: string[]) {
@@ -325,10 +331,10 @@ function applyBookingQuery() {
   let resolved: Service | null = null
   if (svcIdRaw) {
     const idNum = Number(svcIdRaw)
-    resolved = services.find((s) => s.id === idNum) ?? null
+    resolved = services.value.find((s) => s.id === idNum) ?? null
   }
   if (!resolved && detailRaw) {
-    resolved = services.find((s) => s.name.toLowerCase() === detailRaw.toLowerCase()) ?? null
+    resolved = services.value.find((s) => s.name.toLowerCase() === detailRaw.toLowerCase()) ?? null
   }
   if (resolved) {
     selectedServiceId.value = resolved.id
@@ -398,20 +404,36 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    const res = await $fetch<{ ok: boolean; reference: string }>('/api/booking', {
+    const useRapidfixApi = Boolean(String(config.public.rapidfixApiUrl ?? '').trim())
+
+    const res = await $fetch<{ ok: boolean; reference: string; estimated_total?: number }>('/api/booking', {
       method: 'POST',
-      body: {
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        service: form.service,
-        deviceBrand: form.deviceBrand,
-        deviceModel: form.deviceModel.trim(),
-        address: form.address.trim(),
-        preferredDate: form.preferredDate,
-        preferredTime: form.preferredTime,
-        notes: form.notes.trim(),
-        accessories: selectedAccessories.value.map((a) => a.name),
-      },
+      body: useRapidfixApi
+        ? {
+            name: form.name.trim(),
+            phone: form.phone.trim(),
+            email: undefined,
+            address: form.address.trim(),
+            deviceBrand: form.deviceBrand,
+            deviceModel: form.deviceModel.trim(),
+            service_id: selectedService.value!.id,
+            preferredDate: form.preferredDate,
+            preferredTime: form.preferredTime,
+            notes: form.notes.trim(),
+            accessory_uuids: selectedAccessoryUuids.value,
+          }
+        : {
+            name: form.name.trim(),
+            phone: form.phone.trim(),
+            service: form.service,
+            deviceBrand: form.deviceBrand,
+            deviceModel: form.deviceModel.trim(),
+            address: form.address.trim(),
+            preferredDate: form.preferredDate,
+            preferredTime: form.preferredTime,
+            notes: form.notes.trim(),
+            accessories: selectedAccessories.value.map((a) => a.name),
+          },
     })
     reference.value = res.reference
     lastBooking.value = {

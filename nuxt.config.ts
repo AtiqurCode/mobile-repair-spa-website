@@ -36,8 +36,10 @@ export default defineNuxtConfig({
     /** Optional: Zapier / Make / Slack webhook URL to receive JSON booking payloads */
     bookingWebhookUrl: process.env.NUXT_BOOKING_WEBHOOK_URL || '',
     public: {
+      /** Laravel public API base (no trailing slash), e.g. https://rapidfix-be.test/api */
+      rapidfixApiUrl: process.env.NUXT_PUBLIC_RAPIFIX_API_URL || '',
       /** Shown on booking success; used in mailto links site-wide */
-      contactEmail: 'hello@rapidfix.com'
-    }
-  }
+      contactEmail: 'hello@rapidfix.com',
+    },
+  },
 })

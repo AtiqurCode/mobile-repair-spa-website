@@ -5,14 +5,19 @@ import {
   formatPrice,
   popularTags,
   serviceCategories,
-  services,
   type Service,
 } from '~/composables/useServices'
 import PreviewModal, { type PreviewBadge } from '~/components/PreviewModal.vue'
+import { useCatalogData } from '~/composables/useCatalogData'
 
 useHead({ title: 'RapidFix Phone Repair — Expert Repairs & Same-Day Service' })
 
 const route = useRoute()
+const { services, refresh: refreshCatalog } = useCatalogData()
+
+onMounted(() => {
+  void refreshCatalog()
+})
 const isServicesPage = computed(() => route.path === '/' || route.name === 'index')
 const isAccessoriesPage = computed(() => route.path.startsWith('/accessories'))
 
@@ -53,9 +58,10 @@ const PAGE_SIZE = 9
 const currentPage = ref(1)
 
 const filteredServices = computed(() => {
-  let result = activeCategory.value === 'All Categories'
-    ? [...services]
-    : services.filter((s) => s.category === activeCategory.value)
+  let result =
+    activeCategory.value === 'All Categories'
+      ? [...services.value]
+      : services.value.filter((s) => s.category === activeCategory.value)
 
   if (activeTag.value) {
     const tag = activeTag.value
