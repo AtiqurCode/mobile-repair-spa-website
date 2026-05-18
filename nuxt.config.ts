@@ -4,6 +4,12 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode'],
+  // SPA mode (ssr: false) doesn't ship a server-side app manifest, so this feature
+  // adds nothing but causes Vite import-analysis to fail on the (dead-code) `#app-manifest`
+  // import inside Nuxt's manifest composable. Disabling it removes the resolution attempt.
+  experimental: {
+    appManifest: false,
+  },
   colorMode: {
     classSuffix: ''
   },

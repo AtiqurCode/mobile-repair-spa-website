@@ -391,7 +391,7 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
     </Transition>
 
     <!-- Mobile: search + filter toggle -->
-    <div class="sticky top-14 z-30 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur transition-[box-shadow,border-color,background-color] duration-300 ease-out dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
+    <div class="sticky top-[var(--rfx-header-h,3.5rem)] z-30 border-b border-slate-200 bg-white/95 px-4 py-2.5 backdrop-blur transition-[box-shadow,border-color,background-color] duration-300 ease-out dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
       <div class="flex items-center gap-2">
         <div class="relative min-w-0 flex-1">
           <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -647,7 +647,10 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
       </div>
     </Teleport>
 
-    <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <section
+      class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8"
+      :class="selectedAccessoryUuids.length ? 'pb-28 lg:pb-10' : ''"
+    >
       <div class="flex flex-col gap-8 lg:flex-row lg:items-start">
         <!-- Desktop sidebar (restores column divider) -->
         <aside class="hidden w-80 shrink-0 lg:sticky lg:top-24 lg:block">
@@ -896,7 +899,7 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
                   {{ formatAccessoryPrice(item.price) }}
                 </p>
                 <NuxtLink
-                  :to="{ path: '/book', query: { detail: `Accessory: ${item.name}`, acc: item.uuid } }"
+                  :to="{ path: '/book', query: { acc: item.uuid } }"
                   class="relative z-20 mt-auto inline-flex w-full items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800 transition hover:bg-rose-100 active:scale-95 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200 sm:w-auto"
                 >
                   Buy Now
@@ -963,7 +966,7 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
         previewAccessory
           ? {
               label: 'Buy now',
-              to: { path: '/book', query: { detail: `Accessory: ${previewAccessory.name}` } },
+              to: { path: '/book', query: { acc: previewAccessory.uuid } },
             }
           : undefined
       "

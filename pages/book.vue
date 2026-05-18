@@ -1,29 +1,25 @@
 <script setup lang="ts">
-import { CalendarCheck2, CheckCircle2, ClipboardCopy, Phone, Search, X } from 'lucide-vue-next'
+import { CalendarCheck2, CheckCircle2, ClipboardCopy, Clock3, Phone, Search, ShieldCheck, Wrench, X } from 'lucide-vue-next'
 import {
   accessories,
   accessoryFitsLabel,
   formatAccessoryPrice,
   type AccessoryBrand,
 } from '~/composables/useAccessories'
+import {
+  formatPrice,
+  mapCategoryToBookingBrand,
+  services,
+  type Service,
+} from '~/composables/useServices'
 
 useHead({ title: 'Book an Appointment — RapidFix Phone Repair' })
 
 const config = useRuntimeConfig()
 const contactEmail = config.public.contactEmail as string
 
-const services = [
-  'Screen Replacement',
-  'Battery Replacement',
-  'Charging Port Repair',
-  'Camera Repair',
-  'Water Damage Treatment',
-  'Speaker / Microphone Repair',
-  'Wi-Fi / Bluetooth Repair',
-  'Back Glass / Housing',
-  'Diagnostic / Not Sure',
-  'Other',
-]
+const serviceCategoryOptions = ['All', 'iPhone', 'Samsung', 'Google Pixel', 'General'] as const
+type ServiceCategoryFilter = (typeof serviceCategoryOptions)[number]
 
 const deviceBrands = ['iPhone', 'Samsung', 'Google Pixel', 'Other / Mixed', 'Not sure']
 
@@ -38,18 +34,31 @@ const route = useRoute()
 const router = useRouter()
 
 const selectedAccessoryUuids = ref<string[]>([])
+const selectedServiceId = ref<number | null>(null)
 
 const accessoryPickerOpen = ref(false)
 const accessorySearch = ref('')
 const accessoryBrandFilter = ref<'all' | AccessoryBrand>('all')
 const accessoryCategoryFilter = ref<'all' | string>('all')
 
+const servicePickerOpen = ref(false)
+const serviceSearch = ref('')
+const serviceCategoryFilter = ref<ServiceCategoryFilter>('All')
+
 function closeAccessoryPicker() {
   accessoryPickerOpen.value = false
 }
 
+function closeServicePicker() {
+  servicePickerOpen.value = false
+}
+
 function onAccessoryPickerEscape(e: KeyboardEvent) {
   if (e.key === 'Escape') closeAccessoryPicker()
+}
+
+function onServicePickerEscape(e: KeyboardEvent) {
+  if (e.key === 'Escape') closeServicePicker()
 }
 
 watch(accessoryPickerOpen, (open) => {
@@ -59,10 +68,18 @@ watch(accessoryPickerOpen, (open) => {
   else window.removeEventListener('keydown', onAccessoryPickerEscape)
 })
 
+watch(servicePickerOpen, (open) => {
+  if (!import.meta.client) return
+  document.documentElement.style.overflow = open ? 'hidden' : ''
+  if (open) window.addEventListener('keydown', onServicePickerEscape)
+  else window.removeEventListener('keydown', onServicePickerEscape)
+})
+
 onUnmounted(() => {
   if (!import.meta.client) return
   document.documentElement.style.overflow = ''
   window.removeEventListener('keydown', onAccessoryPickerEscape)
+  window.removeEventListener('keydown', onServicePickerEscape)
 })
 
 const accessoryCategories = computed(() => {
@@ -93,6 +110,50 @@ const filteredAccessoryPickerList = computed(() => {
     )
   })
 })
+
+const selectedService = computed<Service | null>(() => {
+  if (selectedServiceId.value == null) return null
+  return services.find((s) => s.id === selectedServiceId.value) ?? null
+})
+
+const filteredServicePickerList = computed(() => {
+  const q = serviceSearch.value.toLowerCase().trim()
+  return services.filter((s) => {
+    if (serviceCategoryFilter.value !== 'All' && s.category !== serviceCategoryFilter.value) return false
+    if (!q) return true
+    return (
+      s.name.toLowerCase().includes(q) ||
+      s.category.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.tags.some((t) => t.toLowerCase().includes(q))
+    )
+  })
+})
+
+function pickService(svc: Service) {
+  selectedServiceId.value = svc.id
+  form.service = svc.name
+  if (!form.deviceBrand) {
+    form.deviceBrand = mapCategoryToBookingBrand(svc.category)
+  }
+  syncSvcQuery(svc.id)
+  closeServicePicker()
+}
+
+function clearService() {
+  selectedServiceId.value = null
+  form.service = ''
+  syncSvcQuery(null)
+}
+
+function syncSvcQuery(id: number | null) {
+  const query = { ...(route.query as Record<string, any>) }
+  if (id != null) query.svcId = String(id)
+  else delete query.svcId
+  delete query.detail
+  delete query.service
+  router.replace({ path: '/book', query })
+}
 
 function parseCsv(val: string): string[] {
   return [...new Set(val.split(',').map((s) => s.trim()).filter(Boolean))]
@@ -253,29 +314,35 @@ function applyBookingQuery() {
   if (submitted.value) return
   const q = route.query
   const brandRaw = firstQueryString(q.brand)
-  const serviceRaw = firstQueryString(q.service)
+  const svcIdRaw = firstQueryString(q.svcId)
   const detailRaw = safeDecode(firstQueryString(q.detail)).trim()
   const accRaw = safeDecode(firstQueryString(q.acc)).trim()
 
   if (brandRaw && deviceBrands.includes(brandRaw)) {
     form.deviceBrand = brandRaw
   }
-  if (serviceRaw && services.includes(serviceRaw)) {
-    form.service = serviceRaw
+
+  let resolved: Service | null = null
+  if (svcIdRaw) {
+    const idNum = Number(svcIdRaw)
+    resolved = services.find((s) => s.id === idNum) ?? null
+  }
+  if (!resolved && detailRaw) {
+    resolved = services.find((s) => s.name.toLowerCase() === detailRaw.toLowerCase()) ?? null
+  }
+  if (resolved) {
+    selectedServiceId.value = resolved.id
+    form.service = resolved.name
+    if (!form.deviceBrand) form.deviceBrand = mapCategoryToBookingBrand(resolved.category)
+  } else {
+    selectedServiceId.value = null
+    form.service = ''
   }
 
   if (accRaw) {
     selectedAccessoryUuids.value = parseCsv(accRaw)
   } else {
     selectedAccessoryUuids.value = []
-  }
-
-  const noteLines: string[] = []
-  if (detailRaw && !/^accessory\s*:/i.test(detailRaw)) {
-    noteLines.push(`Requested service (from listing): ${detailRaw}`)
-  }
-  if (noteLines.length) {
-    form.notes = `${noteLines.join('\n')}\n`
   }
 }
 
@@ -320,7 +387,7 @@ async function copySummary() {
 
 async function handleSubmit() {
   errorMessage.value = ''
-  if (!form.name.trim() || !form.phone.trim() || !form.service) {
+  if (!form.name.trim() || !form.phone.trim() || !selectedService.value) {
     errorMessage.value = 'Please fill in your name, phone, and the service you need.'
     return
   }
@@ -362,6 +429,11 @@ async function handleSubmit() {
     }
     submitted.value = true
     Object.assign(form, EMPTY_FORM)
+    selectedServiceId.value = null
+    selectedAccessoryUuids.value = []
+    if (Object.keys(route.query).length > 0) {
+      router.replace({ path: '/book', query: {} })
+    }
   } catch (e: unknown) {
     const err = e as { data?: { statusMessage?: string }; message?: string }
     errorMessage.value = err.data?.statusMessage || err.message || 'Something went wrong. Please try again or call us.'
@@ -502,17 +574,66 @@ function bookAnother() {
               </div>
             </div>
 
-            <div>
-              <label for="b-service" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">Service needed <span class="text-rose-500">*</span></label>
-              <select
-                id="b-service"
-                v-model="form.service"
-                required
-                class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-bold text-slate-900 dark:text-white">
+                    Service needed <span class="text-rose-500">*</span>
+                  </p>
+                  <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    Pick the main repair you need. You can change it any time before submitting.
+                  </p>
+                </div>
+                <span
+                  v-if="selectedService"
+                  class="inline-flex shrink-0 items-center rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-bold text-white"
+                >
+                  Selected
+                </span>
+              </div>
+
+              <div
+                v-if="selectedService"
+                class="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950"
               >
-                <option disabled value="">Choose a service…</option>
-                <option v-for="s in services" :key="s" :value="s">{{ s }}</option>
-              </select>
+                <img :src="selectedService.image" :alt="selectedService.name" class="h-14 w-14 rounded-lg object-cover" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ selectedService.name }}</p>
+                  <p class="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                    {{ selectedService.category }} · {{ selectedService.eta }} · {{ selectedService.warranty }} warranty
+                  </p>
+                  <p class="mt-1 text-sm font-bold text-rose-600 dark:text-rose-400">
+                    From {{ formatPrice(selectedService.price) }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                  aria-label="Remove service"
+                  @click="clearService"
+                >
+                  <X class="h-4 w-4" />
+                </button>
+              </div>
+
+              <button
+                v-else
+                type="button"
+                class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-sm font-semibold text-slate-700 transition hover:border-rose-400 hover:bg-rose-50/40 active:scale-[0.99] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-rose-700 dark:hover:bg-rose-950/30"
+                @click="servicePickerOpen = true"
+              >
+                <Wrench class="h-4 w-4" /> Choose a service
+              </button>
+
+              <div v-if="selectedService" class="mt-3 flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+                  @click="servicePickerOpen = true"
+                >
+                  Change service
+                </button>
+              </div>
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
@@ -720,14 +841,16 @@ function bookAnother() {
           </div>
 
           <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
-            <div class="relative">
-              <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                v-model="accessorySearch"
-                type="text"
-                placeholder="Search accessories…"
-                class="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
+            <div class="sticky -top-4 z-10 -mx-4 -mt-4 bg-white px-4 pb-3 pt-4 dark:bg-slate-900 sm:-mx-5 sm:-top-4 sm:px-5">
+              <div class="relative">
+                <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  v-model="accessorySearch"
+                  type="text"
+                  placeholder="Search accessories…"
+                  class="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
             </div>
 
             <!-- Brand filter with images -->
@@ -782,7 +905,7 @@ function bookAnother() {
               <div class="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  class="rounded-full border px-3 py-1.5 text-xs font-semibold transition"
+                  class="inline-flex min-h-[2.5rem] items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition"
                   :class="
                     accessoryCategoryFilter === 'all'
                       ? 'border-rose-500 bg-rose-600 text-white'
@@ -796,7 +919,7 @@ function bookAnother() {
                   v-for="c in accessoryCategories"
                   :key="c"
                   type="button"
-                  class="rounded-full border px-3 py-1.5 text-xs font-semibold transition"
+                  class="inline-flex min-h-[2.5rem] items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition"
                   :class="
                     accessoryCategoryFilter === c
                       ? 'border-rose-500 bg-rose-600 text-white'
@@ -871,6 +994,152 @@ function bookAnother() {
             </div>
           </div>
         </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Service picker modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="servicePickerOpen" class="fixed inset-0 z-[80]" role="presentation">
+          <div
+            class="absolute inset-0 bg-slate-900/50 backdrop-blur-[3px]"
+            aria-hidden="true"
+            @click="closeServicePicker"
+          />
+
+          <div
+            class="absolute inset-x-0 bottom-0 flex max-h-[min(90dvh,760px)] flex-col rounded-t-[1.25rem] bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)] ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700 sm:bottom-8 sm:left-1/2 sm:w-[min(960px,calc(100vw-3rem))] sm:-translate-x-1/2 sm:rounded-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="service-picker-title"
+          >
+            <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+              <div>
+                <h2 id="service-picker-title" class="text-lg font-bold text-slate-900 dark:text-white">
+                  Choose a service
+                </h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                  {{ filteredServicePickerList.length }} option{{ filteredServicePickerList.length !== 1 ? 's' : '' }} — one service per booking
+                </p>
+              </div>
+              <button
+                type="button"
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                aria-label="Close services"
+                @click="closeServicePicker"
+              >
+                <X class="h-5 w-5" />
+              </button>
+            </div>
+
+            <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+              <div class="sticky -top-4 z-10 -mx-4 -mt-4 bg-white px-4 pb-3 pt-4 shadow-[0_4px_8px_-6px_rgba(15,23,42,0.08)] dark:bg-slate-900 sm:-mx-5 sm:-top-4 sm:px-5">
+                <div class="relative">
+                  <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    v-model="serviceSearch"
+                    type="text"
+                    placeholder="Search repairs (e.g. screen, battery, water)…"
+                    class="w-full rounded-full border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button
+                    v-for="c in serviceCategoryOptions"
+                    :key="c"
+                    type="button"
+                    class="inline-flex min-h-[2.5rem] items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition"
+                    :class="
+                      serviceCategoryFilter === c
+                        ? 'border-rose-500 bg-rose-600 text-white'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900'
+                    "
+                    @click="serviceCategoryFilter = c"
+                  >
+                    {{ c }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Results -->
+              <div v-if="filteredServicePickerList.length === 0" class="mt-6 rounded-2xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-300">
+                No services match these filters.
+              </div>
+
+              <div v-else class="mt-5 grid gap-3 sm:grid-cols-2">
+                <button
+                  v-for="s in filteredServicePickerList"
+                  :key="s.id"
+                  type="button"
+                  class="group flex items-center gap-3 rounded-2xl border bg-white p-3 text-left shadow-sm transition active:scale-[0.99] dark:bg-slate-950"
+                  :class="
+                    selectedServiceId === s.id
+                      ? 'border-rose-500 ring-1 ring-rose-500/30'
+                      : 'border-slate-200 hover:border-rose-300 hover:bg-rose-50/40 dark:border-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-950/20'
+                  "
+                  @click="pickService(s)"
+                >
+                  <img :src="s.image" :alt="s.name" class="h-14 w-14 rounded-xl object-cover" />
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ s.name }}</p>
+                    <p class="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                      {{ s.category }}
+                    </p>
+                    <div class="mt-1 flex flex-wrap items-center gap-1">
+                      <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        <Clock3 class="h-2.5 w-2.5" /> {{ s.eta }}
+                      </span>
+                      <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        <ShieldCheck class="h-2.5 w-2.5" /> {{ s.warranty }}
+                      </span>
+                    </div>
+                    <p class="mt-1 text-sm font-bold text-slate-900 dark:text-white">From {{ formatPrice(s.price) }}</p>
+                  </div>
+                  <span
+                    class="shrink-0 rounded-full px-3 py-2 text-xs font-bold transition"
+                    :class="
+                      selectedServiceId === s.id
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-rose-600 text-white group-hover:bg-rose-500'
+                    "
+                  >
+                    {{ selectedServiceId === s.id ? 'Selected' : 'Select' }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                {{ selectedService ? selectedService.name : 'No service selected yet' }}
+              </p>
+              <div class="flex items-center gap-2">
+                <button
+                  v-if="selectedService"
+                  type="button"
+                  class="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  @click="clearService"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  class="rounded-full bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-500 active:scale-95"
+                  @click="closeServicePicker"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </Transition>
     </Teleport>

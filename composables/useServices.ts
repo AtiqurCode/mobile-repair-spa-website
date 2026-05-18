@@ -353,28 +353,9 @@ export function mapCategoryToBookingBrand(category: string): string {
   return 'Other / Mixed'
 }
 
-/** Maps catalog service name → /book "Service needed" select value */
-export function mapServiceNameToBookingService(name: string): string {
-  const n = name.toLowerCase()
-  if (n.includes('water damage')) return 'Water Damage Treatment'
-  if (n.includes('screen protector')) return 'Other'
-  if (n.includes('screen') && n.includes('replacement')) return 'Screen Replacement'
-  if (n.includes('battery')) return 'Battery Replacement'
-  if (n.includes('charging port')) return 'Charging Port Repair'
-  if (n.includes('camera')) return 'Camera Repair'
-  if (n.includes('microphone') || n.includes('speaker') || n.includes('earpiece')) return 'Speaker / Microphone Repair'
-  if (n.includes('wi-fi') || n.includes('bluetooth')) return 'Wi-Fi / Bluetooth Repair'
-  if (n.includes('back glass') || n.includes('back cover')) return 'Back Glass / Housing'
-  if (n.includes('face id') || n.includes('touch id')) return 'Other'
-  if (n.includes('power') && n.includes('volume')) return 'Other'
-  if (n.includes('sim') || n.includes('microsd')) return 'Other'
-  return 'Diagnostic / Not Sure'
-}
-
 export function bookingQueryForService(service: Service) {
   return {
     brand: mapCategoryToBookingBrand(service.category),
-    service: mapServiceNameToBookingService(service.name),
-    detail: service.name,
+    svcId: String(service.id),
   }
 }

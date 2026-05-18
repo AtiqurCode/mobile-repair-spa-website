@@ -21,10 +21,30 @@ function isNavLinkActive(to: string) {
   if (to === '/') return path === '/'
   return path === to || path.startsWith(`${to}/`)
 }
+
+function onMenuEscape(e: KeyboardEvent) {
+  if (e.key === 'Escape') mobileMenuOpen.value = false
+}
+
+watch(mobileMenuOpen, (open) => {
+  if (!import.meta.client) return
+  if (open) window.addEventListener('keydown', onMenuEscape)
+  else window.removeEventListener('keydown', onMenuEscape)
+})
+
+// Close on route change so menu doesn't linger after navigation
+watch(() => route.path, () => {
+  mobileMenuOpen.value = false
+})
+
+onUnmounted(() => {
+  if (!import.meta.client) return
+  window.removeEventListener('keydown', onMenuEscape)
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+  <div class="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100 [--rfx-header-h:3.5rem]">
     <header
       class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90"
     >
@@ -85,7 +105,9 @@ function isNavLinkActive(to: string) {
           <button
             type="button"
             class="inline-flex items-center justify-center rounded-full bg-slate-100 p-2 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 lg:hidden"
-            aria-label="Open menu"
+            :aria-label="mobileMenuOpen ? 'Close menu' : 'Open menu'"
+            :aria-expanded="mobileMenuOpen"
+            aria-controls="mobile-nav-drawer"
             @click="mobileMenuOpen = !mobileMenuOpen"
           >
             <X v-if="mobileMenuOpen" class="h-4 w-4" />
@@ -95,7 +117,11 @@ function isNavLinkActive(to: string) {
       </nav>
 
       <!-- Mobile drawer -->
-      <div v-if="mobileMenuOpen" class="border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 lg:hidden">
+      <div
+        v-if="mobileMenuOpen"
+        id="mobile-nav-drawer"
+        class="border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 lg:hidden"
+      >
         <nav class="flex flex-col gap-1">
           <NuxtLink
             v-for="link in navLinks"
@@ -122,6 +148,14 @@ function isNavLinkActive(to: string) {
         </nav>
       </div>
     </header>
+
+    <!-- Outside-click backdrop for mobile drawer -->
+    <div
+      v-if="mobileMenuOpen"
+      class="fixed inset-0 top-[var(--rfx-header-h)] z-40 bg-slate-900/30 backdrop-blur-[1px] lg:hidden"
+      aria-hidden="true"
+      @click="mobileMenuOpen = false"
+    />
 
     <main>
       <slot />

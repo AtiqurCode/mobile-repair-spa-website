@@ -185,7 +185,7 @@ function closeMobileFilters() {
 
     <!-- ── Mobile: category strip + filter sheet trigger (hidden lg+) ── -->
     <div
-      class="sticky top-14 z-30 border-b border-slate-200/90 bg-white/95 shadow-sm backdrop-blur-md transition-[box-shadow,border-color,background-color] duration-300 ease-out dark:border-slate-800 dark:bg-slate-950/95 lg:hidden"
+      class="sticky top-[var(--rfx-header-h,3.5rem)] z-30 border-b border-slate-200/90 bg-white/95 shadow-sm backdrop-blur-md transition-[box-shadow,border-color,background-color] duration-300 ease-out dark:border-slate-800 dark:bg-slate-950/95 lg:hidden"
     >
       <div class="flex items-stretch gap-2 px-3 py-2.5 sm:px-4">
         <div class="relative min-w-0 flex-1">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Clock3, Mail, MapPin, MessageSquare, Phone, Send, type Component } from 'lucide-vue-next'
+import { services as catalogServices } from '~/composables/useServices'
 
 useHead({ title: 'Contact Us — RapidFix Phone Repair' })
 
@@ -47,17 +48,8 @@ const contactItems: ContactItem[] = [
   },
 ]
 
-const services = [
-  'Screen Replacement',
-  'Battery Replacement',
-  'Charging Port Repair',
-  'Camera Repair',
-  'Water Damage Treatment',
-  'Speaker / Microphone Repair',
-  'Wi-Fi / Bluetooth Repair',
-  'Home Repair Visit',
-  'Other',
-]
+const services = [...new Set(catalogServices.map((s) => s.name))].sort()
+services.push('Other / Not sure')
 
 // ── State ────────────────────────────────────────────────────────────────────
 
@@ -159,6 +151,7 @@ function handleSubmit() {
                     id="name"
                     v-model="form.name"
                     type="text"
+                    autocomplete="name"
                     placeholder="John Smith"
                     required
                     class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500"
@@ -170,6 +163,7 @@ function handleSubmit() {
                     id="email"
                     v-model="form.email"
                     type="email"
+                    autocomplete="email"
                     placeholder="john@example.com"
                     required
                     class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500"
@@ -184,6 +178,7 @@ function handleSubmit() {
                     id="phone"
                     v-model="form.phone"
                     type="tel"
+                    autocomplete="tel"
                     placeholder="+1 (555) 000-0000"
                     class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500"
                   >
