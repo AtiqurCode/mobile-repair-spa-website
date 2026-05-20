@@ -103,22 +103,20 @@ export function useCatalogData() {
   const loaded = useState('rapidfix:catalog-loaded', () => false)
 
   async function refresh(): Promise<void> {
-    const config = useRuntimeConfig()
-    const base = (config.public.rapidfixApiUrl as string | undefined)?.replace(/\/$/, '')
-    if (!base) {
+    try {
+      const [svcRes, accRes] = await Promise.all([
+        $fetch<ApiEnvelope<ApiServiceRow[]>>('/api/catalog/services'),
+        $fetch<ApiEnvelope<ApiAccessoryRow[]>>('/api/catalog/accessories'),
+      ])
+
+      services.value = svcRes.data.map(mapService)
+      accessories.value = accRes.data.map(mapAccessory)
+    } catch (e) {
+      // Keep bundled static fallback; surface in console so misconfig is visible during dev.
+      console.warn('[rapidfix] catalog refresh failed — using static fallback', e)
+    } finally {
       loaded.value = true
-
-      return
     }
-
-    const [svcRes, accRes] = await Promise.all([
-      $fetch<ApiEnvelope<ApiServiceRow[]>>(`${base}/services`),
-      $fetch<ApiEnvelope<ApiAccessoryRow[]>>(`${base}/accessories`),
-    ])
-
-    services.value = svcRes.data.map(mapService)
-    accessories.value = accRes.data.map(mapAccessory)
-    loaded.value = true
   }
 
   return { services, accessories, loaded, refresh }

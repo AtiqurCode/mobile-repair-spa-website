@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { CalendarCheck2, CheckCircle2, ClipboardCopy, Clock3, Phone, Search, ShieldCheck, Wrench, X } from 'lucide-vue-next'
 import {
-  accessoryFitsLabel,
   formatAccessoryPrice,
   type Accessory,
-  type AccessoryBrand,
 } from '~/composables/useAccessories'
 import { useCatalogData } from '~/composables/useCatalogData'
+import { useCatalogTaxonomy } from '~/composables/useCatalogTaxonomy'
 import {
   formatPrice,
   mapCategoryToBookingBrand,
@@ -19,13 +18,24 @@ const config = useRuntimeConfig()
 const contactEmail = config.public.contactEmail as string
 
 const { services, accessories, refresh: refreshCatalog } = useCatalogData()
+const {
+  brandNames,
+  serviceCategoryNames,
+  fitsLabel,
+  refresh: refreshTaxonomy,
+} = useCatalogTaxonomy()
 
 onMounted(() => {
   void refreshCatalog()
+  void refreshTaxonomy()
 })
 
-const serviceCategoryOptions = ['All', 'iPhone', 'Samsung', 'Google Pixel', 'General'] as const
-type ServiceCategoryFilter = (typeof serviceCategoryOptions)[number]
+const serviceCategoryOptions = computed<string[]>(() => ['All', ...serviceCategoryNames.value])
+type ServiceCategoryFilter = string
+
+function accessoryFitsLabel(a: Accessory): string {
+  return fitsLabel(a.deviceLineId, a.versionId)
+}
 
 const deviceBrands = ['iPhone', 'Samsung', 'Google Pixel', 'Other / Mixed', 'Not sure']
 
@@ -44,7 +54,7 @@ const selectedServiceId = ref<number | null>(null)
 
 const accessoryPickerOpen = ref(false)
 const accessorySearch = ref('')
-const accessoryBrandFilter = ref<'all' | AccessoryBrand>('all')
+const accessoryBrandFilter = ref<'all' | string>('all')
 const accessoryCategoryFilter = ref<'all' | string>('all')
 
 const servicePickerOpen = ref(false)
@@ -899,7 +909,7 @@ function bookAnother() {
                 </button>
 
                 <button
-                  v-for="b in (['Apple','Samsung','Google','Universal'] as const)"
+                  v-for="b in brandNames"
                   :key="b"
                   type="button"
                   class="flex min-w-[7.5rem] items-center gap-2 rounded-xl border bg-white px-2.5 py-2 text-left transition active:scale-[0.99] dark:bg-slate-950"

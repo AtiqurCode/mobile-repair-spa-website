@@ -1,18 +1,13 @@
 <script setup lang="ts">
 import { Check, ChevronLeft, ChevronRight, ChevronDown, Headphones, Search, SlidersHorizontal, Sparkles, X } from 'lucide-vue-next'
 import {
-  accessoryBrandList,
-  accessoryDeviceCatalog,
-  accessoryFitsLabel,
   filterAccessories,
   formatAccessoryPrice,
-  lineLabel,
-  versionLabel,
   type Accessory,
-  type AccessoryBrand,
 } from '~/composables/useAccessories'
 import PreviewModal, { type PreviewBadge } from '~/components/PreviewModal.vue'
 import { useCatalogData } from '~/composables/useCatalogData'
+import { useCatalogTaxonomy } from '~/composables/useCatalogTaxonomy'
 
 useHead({ title: 'Accessories — RapidFix Phone Repair' })
 
@@ -20,6 +15,18 @@ const route = useRoute()
 const router = useRouter()
 
 const { accessories, refresh: refreshCatalog } = useCatalogData()
+const {
+  brandNames,
+  linesForBrand,
+  lineLabel,
+  versionLabel,
+  fitsLabel,
+  refresh: refreshTaxonomy,
+} = useCatalogTaxonomy()
+
+function accessoryFitsLabel(a: Accessory) {
+  return fitsLabel(a.deviceLineId, a.versionId)
+}
 
 const brandFilter = ref<string>('all')
 const lineFilter = ref('')
@@ -74,14 +81,13 @@ const categories = computed(() => {
   return ['All', ...[...s].sort()]
 })
 
-const linesForBrand = computed(() => {
+const linesForActiveBrand = computed(() => {
   if (brandFilter.value === 'all') return []
-  const b = brandFilter.value as AccessoryBrand
-  return accessoryDeviceCatalog[b] ?? []
+  return linesForBrand(brandFilter.value)
 })
 
 const versionsForLine = computed(() => {
-  const line = linesForBrand.value.find((l) => l.id === lineFilter.value)
+  const line = linesForActiveBrand.value.find((l) => l.id === lineFilter.value)
   return line?.versions ?? []
 })
 
@@ -101,14 +107,14 @@ function applyRouteQuery() {
 
   // Only hydrate line/version when brand is set. Otherwise ?line=… without brand left
   // brand=all + line filled → filter watch clears line/version and feels like "brand reset".
-  if (!b || b === 'all' || !accessoryBrandList.includes(b as AccessoryBrand)) {
+  if (!b || b === 'all' || !brandNames.value.includes(b)) {
     brandFilter.value = 'all'
     lineFilter.value = ''
     versionFilter.value = ''
     expandedLineId.value = ''
     openBrandId.value = ''
   } else {
-    brandFilter.value = b as AccessoryBrand
+    brandFilter.value = b
     lineFilter.value = rawLine
     versionFilter.value = rawVer
     expandedLineId.value = rawLine || ''
@@ -141,6 +147,7 @@ watch(
 
 onMounted(() => {
   void refreshCatalog()
+  void refreshTaxonomy()
   applyRouteQuery()
 })
 
@@ -150,7 +157,7 @@ watch([brandFilter, lineFilter, versionFilter, categoryFilters, searchQuery], ()
     versionFilter.value = ''
     expandedLineId.value = ''
   }
-  const validLine = linesForBrand.value.some((l) => l.id === lineFilter.value)
+  const validLine = linesForActiveBrand.value.some((l) => l.id === lineFilter.value)
   if (!validLine) lineFilter.value = ''
   const ver = versionFilter.value
   const validVer =
@@ -301,7 +308,7 @@ function chooseVersion(lineId: string, versionId: string) {
 
 function linesFor(br: string) {
   if (!br || br === 'all') return []
-  return accessoryDeviceCatalog[br as AccessoryBrand] ?? []
+  return linesForBrand(br)
 }
 
 
@@ -503,7 +510,7 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
                 </button>
 
                 <div
-                  v-for="br in accessoryBrandList"
+                  v-for="br in brandNames"
                   :key="br"
                   class="contain-[layout] overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
                 >
@@ -700,7 +707,7 @@ const accessoryPreviewBadges = computed<PreviewBadge[]>(() => {
                 </button>
 
                 <div
-                  v-for="br in accessoryBrandList"
+                  v-for="br in brandNames"
                   :key="br"
                   class="contain-[layout] overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
                 >

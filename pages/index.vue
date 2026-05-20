@@ -4,24 +4,26 @@ import {
   bookingQueryForService,
   formatPrice,
   popularTags,
-  serviceCategories,
   type Service,
 } from '~/composables/useServices'
 import PreviewModal, { type PreviewBadge } from '~/components/PreviewModal.vue'
 import { useCatalogData } from '~/composables/useCatalogData'
+import { useCatalogTaxonomy } from '~/composables/useCatalogTaxonomy'
 
 useHead({ title: 'RapidFix Phone Repair — Expert Repairs & Same-Day Service' })
 
 const route = useRoute()
 const { services, refresh: refreshCatalog } = useCatalogData()
+const { serviceCategoryNames, refresh: refreshTaxonomy } = useCatalogTaxonomy()
 
 onMounted(() => {
   void refreshCatalog()
+  void refreshTaxonomy()
 })
 const isServicesPage = computed(() => route.path === '/' || route.name === 'index')
 const isAccessoriesPage = computed(() => route.path.startsWith('/accessories'))
 
-const categories = serviceCategories
+const categories = computed(() => ['All Categories', ...serviceCategoryNames.value])
 const activeCategory = ref('All Categories')
 
 const sortOptions = [
