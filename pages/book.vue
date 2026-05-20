@@ -39,18 +39,26 @@ function accessoryFitsLabel(a: Accessory): string {
 
 const deviceBrands = ['iPhone', 'Samsung', 'Google Pixel', 'Other / Mixed', 'Not sure']
 
-const timeSlots = [
-  { value: 'morning', label: 'Morning (9AM – 12PM)' },
-  { value: 'afternoon', label: 'Afternoon (12PM – 5PM)' },
-  { value: 'evening', label: 'Evening (5PM – 9PM)' },
-  { value: 'flexible', label: 'Any time / flexible' },
-]
+/** Exact appointment times in 30-min steps across business hours (9:00 AM – 9:00 PM). */
+function buildTimeSlots() {
+  const slots: { value: string; label: string }[] = []
+  for (let mins = 9 * 60; mins <= 21 * 60; mins += 30) {
+    const h24 = Math.floor(mins / 60)
+    const m = mins % 60
+    const period = h24 < 12 ? 'AM' : 'PM'
+    const h12 = h24 % 12 === 0 ? 12 : h24 % 12
+    const label = `${h12}:${String(m).padStart(2, '0')} ${period}`
+    slots.push({ value: label, label })
+  }
+  return slots
+}
+const timeSlots = buildTimeSlots()
 
 const route = useRoute()
 const router = useRouter()
 
 const selectedAccessoryUuids = ref<string[]>([])
-const selectedServiceId = ref<number | null>(null)
+const selectedServiceIds = ref<number[]>([])
 
 const accessoryPickerOpen = ref(false)
 const accessorySearch = ref('')
@@ -127,10 +135,17 @@ const filteredAccessoryPickerList = computed(() => {
   })
 })
 
-const selectedService = computed<Service | null>(() => {
-  if (selectedServiceId.value == null) return null
-  return services.value.find((s) => s.id === selectedServiceId.value) ?? null
+const selectedServices = computed<Service[]>(() => {
+  const map = new Map(services.value.map((s) => [s.id, s] as const))
+  return selectedServiceIds.value.map((id) => map.get(id)).filter(Boolean) as Service[]
 })
+
+/** First selected service — submitted as the primary `service_id`; the rest go into the notes. */
+const primaryService = computed<Service | null>(() => selectedServices.value[0] ?? null)
+
+function isServiceSelected(id: number) {
+  return selectedServiceIds.value.includes(id)
+}
 
 const filteredServicePickerList = computed(() => {
   const q = serviceSearch.value.toLowerCase().trim()
@@ -146,26 +161,32 @@ const filteredServicePickerList = computed(() => {
   })
 })
 
-function pickService(svc: Service) {
-  selectedServiceId.value = svc.id
-  form.service = svc.name
-  if (!form.deviceBrand) {
-    form.deviceBrand = mapCategoryToBookingBrand(svc.category)
+function toggleService(svc: Service) {
+  const idx = selectedServiceIds.value.indexOf(svc.id)
+  if (idx >= 0) selectedServiceIds.value.splice(idx, 1)
+  else selectedServiceIds.value.push(svc.id)
+  if (!form.deviceBrand && selectedServices.value[0]) {
+    form.deviceBrand = mapCategoryToBookingBrand(selectedServices.value[0].category)
   }
-  syncSvcQuery(svc.id)
-  closeServicePicker()
+  syncSvcQuery(selectedServiceIds.value)
 }
 
-function clearService() {
-  selectedServiceId.value = null
-  form.service = ''
-  syncSvcQuery(null)
+function removeService(id: number) {
+  selectedServiceIds.value = selectedServiceIds.value.filter((x) => x !== id)
+  syncSvcQuery(selectedServiceIds.value)
 }
 
-function syncSvcQuery(id: number | null) {
+function clearServices() {
+  selectedServiceIds.value = []
+  syncSvcQuery([])
+}
+
+function syncSvcQuery(ids: number[]) {
+  const unique = [...new Set(ids)]
   const query = { ...(route.query as Record<string, any>) }
-  if (id != null) query.svcId = String(id)
-  else delete query.svcId
+  if (unique.length) query.svc = unique.join(',')
+  else delete query.svc
+  delete query.svcId
   delete query.detail
   delete query.service
   router.replace({ path: '/book', query })
@@ -203,7 +224,7 @@ type BookingForm = {
   notes: string
 }
 
-type BookingSnapshot = BookingForm & { reference: string; accessories: string[] }
+type BookingSnapshot = BookingForm & { reference: string; services: string[]; accessories: string[] }
 
 const EMPTY_FORM: BookingForm = {
   name: '',
@@ -218,6 +239,15 @@ const EMPTY_FORM: BookingForm = {
 }
 
 const form = reactive<BookingForm>({ ...EMPTY_FORM })
+
+// Keep the legacy `form.service` label (used by the non-API path + summary) in sync.
+watch(
+  selectedServices,
+  (list) => {
+    form.service = list.map((s) => s.name).join(', ')
+  },
+  { immediate: true },
+)
 
 const submitting = ref(false)
 const errorMessage = ref('')
@@ -330,6 +360,7 @@ function applyBookingQuery() {
   if (submitted.value) return
   const q = route.query
   const brandRaw = firstQueryString(q.brand)
+  const svcRaw = safeDecode(firstQueryString(q.svc)).trim()
   const svcIdRaw = firstQueryString(q.svcId)
   const detailRaw = safeDecode(firstQueryString(q.detail)).trim()
   const accRaw = safeDecode(firstQueryString(q.acc)).trim()
@@ -338,21 +369,24 @@ function applyBookingQuery() {
     form.deviceBrand = brandRaw
   }
 
-  let resolved: Service | null = null
-  if (svcIdRaw) {
+  // `svc=id1,id2` (multi) is preferred; fall back to legacy `svcId` / `detail` (single).
+  let ids: number[] = []
+  if (svcRaw) {
+    ids = parseCsv(svcRaw)
+      .map((s) => Number(s))
+      .filter((n) => Number.isFinite(n) && services.value.some((s) => s.id === n))
+  }
+  if (!ids.length && svcIdRaw) {
     const idNum = Number(svcIdRaw)
-    resolved = services.value.find((s) => s.id === idNum) ?? null
+    if (services.value.some((s) => s.id === idNum)) ids = [idNum]
   }
-  if (!resolved && detailRaw) {
-    resolved = services.value.find((s) => s.name.toLowerCase() === detailRaw.toLowerCase()) ?? null
+  if (!ids.length && detailRaw) {
+    const match = services.value.find((s) => s.name.toLowerCase() === detailRaw.toLowerCase())
+    if (match) ids = [match.id]
   }
-  if (resolved) {
-    selectedServiceId.value = resolved.id
-    form.service = resolved.name
-    if (!form.deviceBrand) form.deviceBrand = mapCategoryToBookingBrand(resolved.category)
-  } else {
-    selectedServiceId.value = null
-    form.service = ''
+  selectedServiceIds.value = [...new Set(ids)]
+  if (!form.deviceBrand && selectedServices.value[0]) {
+    form.deviceBrand = mapCategoryToBookingBrand(selectedServices.value[0].category)
   }
 
   if (accRaw) {
@@ -381,7 +415,7 @@ function buildSummary() {
     `Reference: ${b.reference}`,
     `Name: ${b.name}`,
     `Phone: ${b.phone}`,
-    `Service: ${b.service}`,
+    b.services?.length ? `Services: ${b.services.join(', ')}` : `Service: ${b.service}`,
     b.address ? `Address: ${b.address}` : '',
     b.deviceBrand ? `Device brand: ${b.deviceBrand}` : '',
     b.deviceModel ? `Device model: ${b.deviceModel}` : '',
@@ -403,8 +437,8 @@ async function copySummary() {
 
 async function handleSubmit() {
   errorMessage.value = ''
-  if (!form.name.trim() || !form.phone.trim() || !selectedService.value) {
-    errorMessage.value = 'Please fill in your name, phone, and the service you need.'
+  if (!form.name.trim() || !form.phone.trim() || selectedServices.value.length === 0) {
+    errorMessage.value = 'Please fill in your name, phone, and at least one service you need.'
     return
   }
   if (!form.address.trim()) {
@@ -416,6 +450,14 @@ async function handleSubmit() {
   try {
     const useRapidfixApi = Boolean(String(config.public.rapidfixApiUrl ?? '').trim())
 
+    // Backend stores one service per appointment. Send the first as the primary and
+    // record any additional services in the notes so the team still sees them.
+    const extraServices = selectedServices.value.slice(1)
+    const baseNotes = form.notes.trim()
+    const submittedNotes = extraServices.length
+      ? `${baseNotes ? `${baseNotes}\n\n` : ''}Additional services requested: ${extraServices.map((s) => s.name).join(', ')}`
+      : baseNotes
+
     const res = await $fetch<{ ok: boolean; reference: string; estimated_total?: number }>('/api/booking', {
       method: 'POST',
       body: useRapidfixApi
@@ -426,10 +468,10 @@ async function handleSubmit() {
             address: form.address.trim(),
             deviceBrand: form.deviceBrand,
             deviceModel: form.deviceModel.trim(),
-            service_id: selectedService.value!.id,
+            service_id: primaryService.value!.id,
             preferredDate: form.preferredDate,
             preferredTime: form.preferredTime,
-            notes: form.notes.trim(),
+            notes: submittedNotes,
             accessory_uuids: selectedAccessoryUuids.value,
           }
         : {
@@ -441,7 +483,7 @@ async function handleSubmit() {
             address: form.address.trim(),
             preferredDate: form.preferredDate,
             preferredTime: form.preferredTime,
-            notes: form.notes.trim(),
+            notes: submittedNotes,
             accessories: selectedAccessories.value.map((a) => a.name),
           },
     })
@@ -452,6 +494,7 @@ async function handleSubmit() {
       phone: form.phone.trim(),
       address: form.address.trim(),
       service: form.service,
+      services: selectedServices.value.map((s) => s.name),
       deviceBrand: form.deviceBrand,
       deviceModel: form.deviceModel.trim(),
       preferredDate: form.preferredDate,
@@ -461,7 +504,7 @@ async function handleSubmit() {
     }
     submitted.value = true
     Object.assign(form, EMPTY_FORM)
-    selectedServiceId.value = null
+    selectedServiceIds.value = []
     selectedAccessoryUuids.value = []
     if (Object.keys(route.query).length > 0) {
       router.replace({ path: '/book', query: {} })
@@ -610,42 +653,45 @@ function bookAnother() {
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <p class="text-sm font-bold text-slate-900 dark:text-white">
-                    Service needed <span class="text-rose-500">*</span>
+                    Services needed <span class="text-rose-500">*</span>
                   </p>
                   <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Pick the main repair you need. You can change it any time before submitting.
+                    Add one or more repairs you need. You can change them any time before submitting.
                   </p>
                 </div>
                 <span
-                  v-if="selectedService"
+                  v-if="selectedServices.length"
                   class="inline-flex shrink-0 items-center rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-bold text-white"
                 >
-                  Selected
+                  {{ selectedServices.length }} selected
                 </span>
               </div>
 
-              <div
-                v-if="selectedService"
-                class="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950"
-              >
-                <img :src="selectedService.image" :alt="selectedService.name" class="h-14 w-14 rounded-lg object-cover" />
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ selectedService.name }}</p>
-                  <p class="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                    {{ selectedService.category }} · {{ selectedService.eta }} · {{ selectedService.warranty }} warranty
-                  </p>
-                  <p class="mt-1 text-sm font-bold text-rose-600 dark:text-rose-400">
-                    From {{ formatPrice(selectedService.price) }}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-                  aria-label="Remove service"
-                  @click="clearService"
+              <div v-if="selectedServices.length" class="mt-3 space-y-2">
+                <div
+                  v-for="svc in selectedServices"
+                  :key="svc.id"
+                  class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-950"
                 >
-                  <X class="h-4 w-4" />
-                </button>
+                  <img :src="svc.image" :alt="svc.name" class="h-14 w-14 rounded-lg object-cover" />
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ svc.name }}</p>
+                    <p class="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                      {{ svc.category }} · {{ svc.eta }} · {{ svc.warranty }} warranty
+                    </p>
+                    <p class="mt-1 text-sm font-bold text-rose-600 dark:text-rose-400">
+                      From {{ formatPrice(svc.price) }}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                    aria-label="Remove service"
+                    @click="removeService(svc.id)"
+                  >
+                    <X class="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               <button
@@ -654,16 +700,24 @@ function bookAnother() {
                 class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-sm font-semibold text-slate-700 transition hover:border-rose-400 hover:bg-rose-50/40 active:scale-[0.99] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-rose-700 dark:hover:bg-rose-950/30"
                 @click="servicePickerOpen = true"
               >
-                <Wrench class="h-4 w-4" /> Choose a service
+                <Wrench class="h-4 w-4" /> Choose services
               </button>
 
-              <div v-if="selectedService" class="mt-3 flex flex-col gap-2 sm:flex-row">
+              <div class="mt-3 flex flex-col gap-2 sm:flex-row">
                 <button
                   type="button"
                   class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
                   @click="servicePickerOpen = true"
                 >
-                  Change service
+                  Add / change services
+                </button>
+                <button
+                  v-if="selectedServices.length"
+                  type="button"
+                  class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 sm:w-auto"
+                  @click="clearServices"
+                >
+                  Clear services
                 </button>
               </div>
             </div>
@@ -1056,10 +1110,10 @@ function bookAnother() {
             <div class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
               <div>
                 <h2 id="service-picker-title" class="text-lg font-bold text-slate-900 dark:text-white">
-                  Choose a service
+                  Choose services
                 </h2>
                 <p class="text-xs text-slate-500 dark:text-slate-400">
-                  {{ filteredServicePickerList.length }} option{{ filteredServicePickerList.length !== 1 ? 's' : '' }} — one service per booking
+                  {{ filteredServicePickerList.length }} option{{ filteredServicePickerList.length !== 1 ? 's' : '' }} — add as many as you like
                 </p>
               </div>
               <button
@@ -1113,11 +1167,11 @@ function bookAnother() {
                   type="button"
                   class="group flex items-center gap-3 rounded-2xl border bg-white p-3 text-left shadow-sm transition active:scale-[0.99] dark:bg-slate-950"
                   :class="
-                    selectedServiceId === s.id
+                    isServiceSelected(s.id)
                       ? 'border-rose-500 ring-1 ring-rose-500/30'
                       : 'border-slate-200 hover:border-rose-300 hover:bg-rose-50/40 dark:border-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-950/20'
                   "
-                  @click="pickService(s)"
+                  @click="toggleService(s)"
                 >
                   <img :src="s.image" :alt="s.name" class="h-14 w-14 rounded-xl object-cover" />
                   <div class="min-w-0 flex-1">
@@ -1138,12 +1192,12 @@ function bookAnother() {
                   <span
                     class="shrink-0 rounded-full px-3 py-2 text-xs font-bold transition"
                     :class="
-                      selectedServiceId === s.id
-                        ? 'bg-emerald-600 text-white'
+                      isServiceSelected(s.id)
+                        ? 'bg-slate-100 text-slate-700 group-hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:group-hover:bg-slate-700'
                         : 'bg-rose-600 text-white group-hover:bg-rose-500'
                     "
                   >
-                    {{ selectedServiceId === s.id ? 'Selected' : 'Select' }}
+                    {{ isServiceSelected(s.id) ? 'Remove' : 'Add' }}
                   </span>
                 </button>
               </div>
@@ -1151,14 +1205,14 @@ function bookAnother() {
 
             <div class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
               <p class="text-xs text-slate-500 dark:text-slate-400">
-                {{ selectedService ? selectedService.name : 'No service selected yet' }}
+                {{ selectedServices.length ? `${selectedServices.length} selected` : 'No services selected yet' }}
               </p>
               <div class="flex items-center gap-2">
                 <button
-                  v-if="selectedService"
+                  v-if="selectedServices.length"
                   type="button"
                   class="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-                  @click="clearService"
+                  @click="clearServices"
                 >
                   Clear
                 </button>

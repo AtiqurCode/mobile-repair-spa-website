@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Mail, MapPin, Phone } from 'lucide-vue-next'
+import { Mail, Phone } from 'lucide-vue-next'
 
 </script>
 
@@ -9,9 +9,9 @@ import { Mail, MapPin, Phone } from 'lucide-vue-next'
     <div class="mx-auto flex max-w-7xl flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
       <div class="flex-1">
         <h2 class="text-2xl font-bold">Ready to Get Your Device Fixed?</h2>
-        <p class="mt-1 text-sm text-rose-100">Same-day service, honest pricing, 12-month warranty. Visit us or book online.</p>
+        <p class="mt-1 text-sm text-rose-100">Same-day service, honest pricing, 12-month warranty. Book online.</p>
         <p class="mt-1 text-sm text-rose-100">
-          <MapPin class="mr-1 inline h-3.5 w-3.5" />120 Tech Avenue, Downtown — Open 7 days, 9AM–9PM
+          Open 7 days, 9AM–9PM
         </p>
       </div>
       <NuxtLink
@@ -56,10 +56,6 @@ import { Mail, MapPin, Phone } from 'lucide-vue-next'
         <div>
           <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-white">Contact</h3>
           <address class="space-y-3 text-sm not-italic">
-            <p class="flex items-start gap-2">
-              <MapPin class="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
-              120 Tech Avenue, Downtown, New York
-            </p>
             <p class="flex items-center gap-2">
               <Phone class="h-4 w-4 shrink-0 text-rose-400" />
               <a href="tel:+15551234567" class="transition hover:text-white">+1 (555) 123-4567</a>
@@ -74,7 +70,7 @@ import { Mail, MapPin, Phone } from 'lucide-vue-next'
 
       <div class="mt-12 flex flex-col items-center justify-between gap-3 border-t border-slate-800 pt-6 text-xs text-slate-500 sm:flex-row">
         <p>Copyright &copy; {{ new Date().getFullYear() }} RapidFix. All Rights Reserved.</p>
-        <p>120 Tech Avenue, Downtown · Open 7 days, 9AM–9PM</p>
+        <p>Open 7 days, 9AM–9PM</p>
       </div>
     </div>
   </footer>

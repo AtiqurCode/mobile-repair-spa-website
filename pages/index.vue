@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { BadgeCheck, ChevronLeft, ChevronRight, Clock3, ShieldCheck, SlidersHorizontal, Tag, Wrench, X } from 'lucide-vue-next'
+import { BadgeCheck, Check, ChevronLeft, ChevronRight, Clock3, ShieldCheck, SlidersHorizontal, Tag, Wrench, X } from 'lucide-vue-next'
 import {
   bookingQueryForService,
   formatPrice,
+  mapCategoryToBookingBrand,
   popularTags,
   type Service,
 } from '~/composables/useServices'
@@ -36,6 +37,36 @@ const activeTag = ref<string | null>(null)
 
 const previewOpen = ref(false)
 const previewService = ref<Service | null>(null)
+
+// ── Multi-select (mirrors accessories) ─────────────────────────────────────────
+const selectedServiceIds = ref<number[]>([])
+
+function isSelected(id: number) {
+  return selectedServiceIds.value.includes(id)
+}
+
+function toggleSelected(id: number) {
+  const idx = selectedServiceIds.value.indexOf(id)
+  if (idx >= 0) selectedServiceIds.value.splice(idx, 1)
+  else selectedServiceIds.value.push(id)
+}
+
+function clearSelected() {
+  selectedServiceIds.value = []
+}
+
+const selectedServices = computed(() => {
+  const map = new Map(services.value.map((s) => [s.id, s] as const))
+  return selectedServiceIds.value.map((id) => map.get(id)).filter(Boolean) as Service[]
+})
+
+const bookingTo = computed(() => {
+  const q: Record<string, string> = {}
+  if (selectedServiceIds.value.length) q.svc = selectedServiceIds.value.join(',')
+  const first = selectedServices.value[0]
+  if (first) q.brand = mapCategoryToBookingBrand(first.category)
+  return { path: '/book', query: q }
+})
 
 function openServicePreview(svc: Service) {
   previewService.value = svc
@@ -374,7 +405,10 @@ function closeMobileFilters() {
     </Teleport>
 
     <!-- Sidebar + Grid layout -->
-    <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <section
+      class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8"
+      :class="selectedServiceIds.length ? 'pb-28 lg:pb-12' : ''"
+    >
       <div class="flex flex-col gap-8 lg:flex-row lg:items-start">
 
         <!-- ── Sidebar (desktop only) ────────────────────────── -->
@@ -488,6 +522,22 @@ function closeMobileFilters() {
                 :aria-label="`Preview ${service.name}`"
                 @click="openServicePreview(service)"
               />
+
+              <button
+                type="button"
+                class="absolute right-1.5 top-1.5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border shadow-sm transition active:scale-95 xl:right-3 xl:top-3 xl:h-9 xl:w-9"
+                :class="
+                  isSelected(service.id)
+                    ? 'border-rose-600 bg-rose-600 text-white'
+                    : 'border-slate-200 bg-white/90 text-slate-700 backdrop-blur-sm hover:bg-white dark:border-slate-700 dark:bg-slate-950/90 dark:text-slate-200 dark:hover:bg-slate-900'
+                "
+                :aria-pressed="isSelected(service.id)"
+                :aria-label="isSelected(service.id) ? `Remove ${service.name}` : `Add ${service.name}`"
+                @click.stop="toggleSelected(service.id)"
+              >
+                <Check v-if="isSelected(service.id)" class="h-4 w-4" />
+                <span v-else class="text-sm font-extrabold leading-none">+</span>
+              </button>
 
               <!-- Image with overlaid category badge -->
               <div class="relative overflow-hidden">
@@ -616,4 +666,44 @@ function closeMobileFilters() {
       @close="closeServicePreview"
     />
   </div>
+
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-250 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      enter-from-class="opacity-0 translate-y-4"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-4"
+    >
+      <div
+        v-if="selectedServiceIds.length"
+        class="fixed inset-x-0 bottom-0 z-[70] border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:bottom-4 lg:inset-x-auto lg:left-1/2 lg:w-[min(680px,calc(100vw-2rem))] lg:-translate-x-1/2 lg:rounded-2xl lg:border lg:shadow-lg"
+      >
+        <div class="mx-auto flex max-w-7xl items-center gap-3">
+          <p class="min-w-0 flex-1 text-sm font-semibold text-slate-900 dark:text-white">
+            {{ selectedServiceIds.length }} service{{ selectedServiceIds.length !== 1 ? 's' : '' }} selected
+            <span v-if="selectedServiceIds.length <= 3" class="text-slate-500 dark:text-slate-400">
+              — {{ selectedServices.map((s) => s.name).join(', ') }}
+            </span>
+          </p>
+
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            @click="clearSelected"
+          >
+            Clear
+          </button>
+
+          <NuxtLink
+            :to="bookingTo"
+            class="inline-flex items-center justify-center rounded-full bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-500 active:scale-95"
+          >
+            Add to booking
+          </NuxtLink>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
