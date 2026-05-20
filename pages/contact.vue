@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Clock3, Mail, MapPin, MessageSquare, Phone, Send, type Component } from 'lucide-vue-next'
+import { Clock3, Mail, MessageSquare, Phone, Send, type Component } from 'lucide-vue-next'
 import { useCatalogData } from '~/composables/useCatalogData'
 
 useHead({ title: 'Contact Us — RapidFix Phone Repair' })
@@ -29,13 +29,6 @@ type ContactItem = {
 }
 
 const contactItems: ContactItem[] = [
-  {
-    icon: MapPin,
-    iconBg: 'bg-rose-100 dark:bg-rose-900/40',
-    iconColor: 'text-rose-600 dark:text-rose-400',
-    label: 'Address',
-    value: '120 Tech Avenue, Downtown, New York',
-  },
   {
     icon: Phone,
     iconBg: 'bg-emerald-100 dark:bg-emerald-900/40',
@@ -108,7 +101,7 @@ function handleSubmit() {
         <div class="space-y-6">
           <div>
             <h2 class="text-xl font-bold text-slate-900 dark:text-white">Contact Information</h2>
-            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Visit us in store, call, or send a message and we'll get back to you same day.</p>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Call, email, or send a message and we'll get back to you same day.</p>
           </div>
 
           <div class="space-y-4">
@@ -130,20 +123,6 @@ function handleSubmit() {
                 <p v-else class="text-sm text-slate-600 dark:text-slate-300">{{ item.value }}</p>
               </div>
             </div>
-          </div>
-
-          <!-- Map embed -->
-          <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d193595.15830869428!2d-74.11976397304903!3d40.69766374874431!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY!5e0!3m2!1sen!2sus!4v1700000000000"
-              width="100%"
-              height="220"
-              style="border:0;"
-              allowfullscreen
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              title="RapidFix location map"
-            />
           </div>
         </div>
 
